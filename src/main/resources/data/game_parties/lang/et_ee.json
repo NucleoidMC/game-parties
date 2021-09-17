@@ -1,0 +1,19 @@
+{
+    "text.game_parties.party.disband.success": "Sinu pidu on laiali saadetud!",
+    "text.game_parties.party.error.already_in_party": "Sa oled juba sellel peol!",
+    "text.game_parties.party.error.already_invited": "%s on juba sellele people kutsutud!",
+    "text.game_parties.party.error.cannot_remove_self": "Ennast ei saa peolt eemaldada!",
+    "text.game_parties.party.error.does_not_exist": "Sa ei juhi ühtegi pidu!",
+    "text.game_parties.party.error.not_in_party": "%s ei ole sellel peol!",
+    "text.game_parties.party.error.not_invited": "Sind ei ole sellele peole kutsutud!",
+    "text.game_parties.party.invited.receiver": "Sind on kutsutud mängija %s peole! ",
+    "text.game_parties.party.invited.receiver.click": "Klõpsa liitumiseks siia",
+    "text.game_parties.party.invited.receiver.hover": "Liitu mängija %s peoga!",
+    "text.game_parties.party.invited.sender": "%s on peole kutsutud",
+    "text.game_parties.party.join.success": "%s on peoga liitunud!",
+    "text.game_parties.party.kicked.receiver": "Sind on peolt välja visatud",
+    "text.game_parties.party.kicked.sender": "%s on peolt välja visatud",
+    "text.game_parties.party.leave.success": "%s on peolt lahkunud!",
+    "text.game_parties.party.transferred.receiver": "Mängija %s pidu on sulle üle kantud",
+    "text.game_parties.party.transferred.sender": "Sinu pidu on mängijale %s üle kantud"
+}

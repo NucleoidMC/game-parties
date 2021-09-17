@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "game_parties",
+  "version": "${version}",
+  "name": "Game Parties",
+  "description": "Support for player parties to join and play games together",
+  "authors": ["Gegy"],
+  "license": "LGPLv3",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["xyz.nucleoid.parties.GameParties"]
+  },
+  "mixins": ["game_parties.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.9.1",
+    "fabric": "*",
+    "minecraft": "1.17.x",
+    "plasmid": "0.5.x",
+    "java": ">=16"
+  }
+}

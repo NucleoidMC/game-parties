@@ -1,0 +1,17 @@
+{
+  "text.game_parties.party.error.already_in_party": "Vous faites déjà parti(e) de ce groupe !",
+  "text.game_parties.party.error.already_invited": "%s a déjà été invité(e) dans votre groupe !",
+  "text.game_parties.party.error.cannot_remove_self": "Vous ne pouvez pas quitter votre propre groupe !",
+  "text.game_parties.party.error.does_not_exist": "Vous n'avez le contrôle d'aucun groupe !",
+  "text.game_parties.party.error.not_in_party": "%s ne fait pas parti(e) de ce groupe !",
+  "text.game_parties.party.error.not_invited": "Vous n'êtes pas invité(e) dans ce groupe !",
+  "text.game_parties.party.invited.receiver": "Vous avez été invité(e) à rejoindre le groupe de %s ! ",
+  "text.game_parties.party.invited.receiver.click": "Cliquez ici pour le rejoindre",
+  "text.game_parties.party.invited.receiver.hover": "Rejoindre le groupe de %s !",
+  "text.game_parties.party.invited.sender": "%s a été invité(e) dans le groupe",
+  "text.game_parties.party.kicked.receiver": "Vous avez été éjecté(e) du groupe.",
+  "text.game_parties.party.kicked.sender": "%s a été éjecté(e) du groupe",
+  "text.game_parties.party.leave.success": "%s a quitté le groupe!",
+  "text.game_parties.party.transferred.receiver": "Le groupe de %s vous a été transféré",
+  "text.game_parties.party.transferred.sender": "Votre groupe a été transféré à %s"
+}
