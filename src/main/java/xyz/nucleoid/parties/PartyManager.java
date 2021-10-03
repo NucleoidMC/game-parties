@@ -3,6 +3,7 @@ package xyz.nucleoid.parties;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,11 @@ public final class PartyManager {
     }
 
     public static void register() {
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+            var partyManager = PartyManager.get(server);
+            partyManager.onPlayerLogOut(handler.player);
+        });
+
         GameEvents.COLLECT_PLAYERS_FOR_JOIN.register((gameSpace, player, additional) -> {
             var partyManager = PartyManager.get(player.server);
 

@@ -10,7 +10,6 @@
   "entrypoints": {
     "main": ["xyz.nucleoid.parties.GameParties"]
   },
-  "mixins": ["game_parties.mixins.json"],
   "depends": {
     "fabricloader": ">=0.9.1",
     "fabric": "*",
