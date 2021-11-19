@@ -1,0 +1,20 @@
+{
+  "text.game_parties.party.disband.success": "Sua party foi quebrada!",
+  "text.game_parties.party.error.already_in_party": "Você já esta nesta party!",
+  "text.game_parties.party.error.already_invited": "%s já foi convidado(a) a esta party!",
+  "text.game_parties.party.error.cannot_remove_self": "Não é possivel se-remover da party!",
+  "text.game_parties.party.error.does_not_exist": "Você não tem controle da party!",
+  "text.game_parties.party.error.not_in_party": "%s não está na party!",
+  "text.game_parties.party.error.not_invited": "Você não foi convidado a esta party!",
+  "text.game_parties.party.invited.receiver": "Você foi convidado para entrar na party de %s! ",
+  "text.game_parties.party.invited.receiver.click": "Clique aqui para entrar",
+  "text.game_parties.party.invited.receiver.hover": "Entrar na party de %s!",
+  "text.game_parties.party.invited.sender": "%s foi convidado a party",
+  "text.game_parties.party.join.success": "%s entrou na party!",
+  "text.game_parties.party.kicked.receiver": "Você foi removido da party",
+  "text.game_parties.party.kicked.sender": "%s foi removido(a) da party",
+  "text.game_parties.party.leave.success": "%s saiu da party!",
+  "text.game_parties.party.transferred.receiver": "A party de %s foi transferida a você",
+  "text.game_parties.party.transferred.sender": "Sua party foi transferida a %s",
+  "text.game_parties.party.left_game": "%s saiu do jogo e foi removido da party!"
+}
