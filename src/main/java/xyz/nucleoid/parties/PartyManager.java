@@ -189,11 +189,15 @@ public final class PartyManager {
     }
 
     private Party getOrCreateOwnParty(PlayerRef owner) {
-        var party = this.playerToParty.computeIfAbsent(owner, o -> new Party(this.server, o));
+        var party = this.playerToParty.computeIfAbsent(owner, this::createParty);
         if (party.isOwner(owner)) {
             return party;
         }
         return null;
+    }
+
+    private Party createParty(PlayerRef owner) {
+        return new Party(this.server, owner);
     }
 
     public Collection<ServerPlayerEntity> getPartyMembers(ServerPlayerEntity player) {
