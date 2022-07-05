@@ -1,0 +1,20 @@
+{
+  "text.game_parties.party.disband.success": "Группа распущена!",
+  "text.game_parties.party.error.already_in_party": "Вы уже состоите в этой группе!",
+  "text.game_parties.party.error.already_invited": "%s уже приглашён в вашу группу!",
+  "text.game_parties.party.error.cannot_remove_self": "Невозможно исключить себя из группы!",
+  "text.game_parties.party.error.does_not_exist": "Вы не управляете группой!",
+  "text.game_parties.party.error.not_in_party": "%s не находится в этой группе!",
+  "text.game_parties.party.error.not_invited": "Вас не приглашали в эту группу!",
+  "text.game_parties.party.invited.receiver": "Вас пригласили в группу %s! ",
+  "text.game_parties.party.invited.receiver.click": "Нажмите, чтобы принять",
+  "text.game_parties.party.invited.receiver.hover": "Присоединиться к группе %s!",
+  "text.game_parties.party.invited.sender": "%s приглашён в группу",
+  "text.game_parties.party.join.success": "%s присоединился к группе!",
+  "text.game_parties.party.kicked.receiver": "Вас исключили из группы",
+  "text.game_parties.party.kicked.sender": "%s исключён из группы",
+  "text.game_parties.party.leave.success": "%s покинул группу!",
+  "text.game_parties.party.transferred.receiver": "Управление группой %s передано вам",
+  "text.game_parties.party.transferred.sender": "Управление группой передано %s",
+  "text.game_parties.party.left_game": "%s покинул игру и был исключён из группы!"
+}
