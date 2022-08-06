@@ -8,6 +8,7 @@ import xyz.nucleoid.plasmid.util.PlayerRef;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 public final class Party {
     private PlayerRef owner;
@@ -17,9 +18,13 @@ public final class Party {
 
     private final MutablePlayerSet memberPlayers;
 
+    private final UUID uuid;
+
     Party(MinecraftServer server, PlayerRef owner) {
         this.memberPlayers = new MutablePlayerSet(server);
         this.setOwner(owner);
+
+        this.uuid = UUID.randomUUID();
     }
 
     void setOwner(PlayerRef owner) {
@@ -68,5 +73,9 @@ public final class Party {
 
     public MutablePlayerSet getMemberPlayers() {
         return this.memberPlayers;
+    }
+
+    public UUID getUuid() {
+        return this.uuid;
     }
 }

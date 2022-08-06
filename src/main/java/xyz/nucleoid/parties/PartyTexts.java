@@ -1,5 +1,7 @@
 package xyz.nucleoid.parties;
 
+import java.util.UUID;
+
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.TranslatableText;
@@ -53,15 +55,15 @@ public final class PartyTexts {
         return new TranslatableText("text.game_parties.party.invited.sender", player.getDisplayName());
     }
 
-    public static MutableText invitedReceiver(ServerPlayerEntity owner) {
+    public static MutableText invitedReceiver(ServerPlayerEntity owner, UUID uuid) {
         return new TranslatableText("text.game_parties.party.invited.receiver", owner.getDisplayName())
-                .append(PartyTexts.inviteNotificationLink(owner));
+                .append(PartyTexts.inviteNotificationLink(owner, uuid));
     }
 
-    public static MutableText inviteNotificationLink(ServerPlayerEntity owner) {
+    public static MutableText inviteNotificationLink(ServerPlayerEntity owner, UUID uuid) {
         return new TranslatableText("text.game_parties.party.invited.receiver.click")
                 .setStyle(GameTexts.commandLinkStyle(
-                        "/party accept " + owner.getGameProfile().getName(),
+                        "/party accept " + uuid,
                         new TranslatableText("text.game_parties.party.invited.receiver.hover", owner.getDisplayName())
                 ));
     }
