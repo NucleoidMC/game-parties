@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.GameProfileArgumentType;
+import net.minecraft.command.argument.UuidArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.MutableText;
 import net.minecraft.util.Formatting;
@@ -32,9 +33,13 @@ public final class PartyCommand {
                     .executes(PartyCommand::transferToPlayer)
                 ))
                 .then(literal("accept")
-                    .then(argument("player", EntityArgumentType.player())
-                    .executes(PartyCommand::acceptInvite)
-                ))
+                    .then(argument("owner", EntityArgumentType.player())
+                        .executes(PartyCommand::acceptInviteByOwner)
+                    )
+                    .then(argument("party", UuidArgumentType.uuid())
+                        .executes(PartyCommand::acceptInviteByUuid)
+                    )
+                )
                 .then(literal("leave").executes(PartyCommand::leave))
                 .then(literal("disband").executes(PartyCommand::disband))
         );
@@ -53,7 +58,7 @@ public final class PartyCommand {
             MutableText message = PartyTexts.invitedSender(player);
             source.sendFeedback(message.formatted(Formatting.GOLD), false);
 
-            var notification = PartyTexts.invitedReceiver(owner)
+            var notification = PartyTexts.invitedReceiver(owner, result.party().getUuid())
                     .formatted(Formatting.GOLD);
 
             player.sendMessage(notification, false);
@@ -118,17 +123,27 @@ public final class PartyCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int acceptInvite(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    private static int acceptInviteByOwner(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        var owner = EntityArgumentType.getPlayer(ctx, "owner");
+        var partyManager = PartyManager.get(ctx.getSource().getServer());
+
+        return acceptInvite(ctx, partyManager.getOwnParty(PlayerRef.of(owner)));
+    }
+
+    private static int acceptInviteByUuid(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        var uuid = UuidArgumentType.getUuid(ctx, "party");
+        var partyManager = PartyManager.get(ctx.getSource().getServer());
+
+        return acceptInvite(ctx, partyManager.getParty(uuid));
+    }
+
+    private static int acceptInvite(CommandContext<ServerCommandSource> ctx, Party party) throws CommandSyntaxException {
         var source = ctx.getSource();
         var player = source.getPlayer();
 
-        var owner = EntityArgumentType.getPlayer(ctx, "player");
-
         var partyManager = PartyManager.get(source.getServer());
-        var result = partyManager.acceptInvite(PlayerRef.of(player), PlayerRef.of(owner));
+        var result = partyManager.acceptInvite(PlayerRef.of(player), party);
         if (result.isOk()) {
-            var party = result.party();
-
             var message = PartyTexts.joinSuccess(player);
             party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
         } else {

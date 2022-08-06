@@ -12,6 +12,7 @@ import xyz.nucleoid.plasmid.util.PlayerRef;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.UUID;
 
 public final class PartyManager {
     private static PartyManager instance;
@@ -105,12 +106,11 @@ public final class PartyManager {
         return PartyResult.err(PartyError.NOT_IN_PARTY);
     }
 
-    public PartyResult acceptInvite(PlayerRef player, PlayerRef owner) {
+    public PartyResult acceptInvite(PlayerRef player, Party party) {
         if (this.playerToParty.containsKey(player)) {
             return PartyResult.err(PartyError.ALREADY_IN_PARTY);
         }
 
-        var party = this.getOwnParty(owner);
         if (party == null) {
             return PartyResult.err(PartyError.DOES_NOT_EXIST);
         }
@@ -177,6 +177,17 @@ public final class PartyManager {
     @Nullable
     public Party getParty(PlayerRef player) {
         return this.playerToParty.get(player);
+    }
+
+    @Nullable
+    public Party getParty(UUID uuid) {
+        for (Party party : this.playerToParty.values()) {
+            if (uuid == party.getUuid()) {
+                return party;
+            }
+        }
+
+        return null;
     }
 
     @Nullable
