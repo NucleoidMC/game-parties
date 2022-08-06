@@ -106,7 +106,7 @@ public final class PartyManager {
         return PartyResult.err(PartyError.NOT_IN_PARTY);
     }
 
-    public PartyResult acceptInvite(PlayerRef player, Party party) {
+    public PartyResult acceptInvite(PlayerRef player, @Nullable Party party) {
         if (this.playerToParty.containsKey(player)) {
             return PartyResult.err(PartyError.ALREADY_IN_PARTY);
         }
@@ -182,7 +182,7 @@ public final class PartyManager {
     @Nullable
     public Party getParty(UUID uuid) {
         for (Party party : this.playerToParty.values()) {
-            if (uuid == party.getUuid()) {
+            if (party.getUuid().equals(uuid)) {
                 return party;
             }
         }
