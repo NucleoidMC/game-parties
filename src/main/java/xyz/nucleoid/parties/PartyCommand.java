@@ -8,7 +8,6 @@ import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.GameProfileArgumentType;
 import net.minecraft.command.argument.UuidArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.MutableText;
 import net.minecraft.util.Formatting;
 import xyz.nucleoid.plasmid.util.PlayerRef;
 
@@ -55,8 +54,7 @@ public final class PartyCommand {
         var partyManager = PartyManager.get(source.getServer());
         var result = partyManager.invitePlayer(PlayerRef.of(owner), PlayerRef.of(player));
         if (result.isOk()) {
-            MutableText message = PartyTexts.invitedSender(player);
-            source.sendFeedback(message.formatted(Formatting.GOLD), false);
+            source.sendFeedback(() -> PartyTexts.invitedSender(player).formatted(Formatting.GOLD), false);
 
             var notification = PartyTexts.invitedReceiver(owner, result.party().getUuid())
                     .formatted(Formatting.GOLD);
@@ -107,7 +105,7 @@ public final class PartyCommand {
         var result = partyManager.transferParty(PlayerRef.of(oldOwner), PlayerRef.of(newOwner));
         if (result.isOk()) {
             source.sendFeedback(
-                    PartyTexts.transferredSender(newOwner).formatted(Formatting.GOLD),
+                    () -> PartyTexts.transferredSender(newOwner).formatted(Formatting.GOLD),
                     false
             );
 
