@@ -13,6 +13,7 @@ import xyz.nucleoid.plasmid.api.util.PlayerRef;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
+import java.util.List;
 
 public final class PartyManager {
     private static PartyManager instance;
@@ -34,6 +35,8 @@ public final class PartyManager {
             var partyManager = PartyManager.get(player.server);
 
             var members = partyManager.getPartyMembers(player);
+            Collections.shuffle((List<ServerPlayerEntity>) members);
+            
             additional.addAll(members);
         });
     }
