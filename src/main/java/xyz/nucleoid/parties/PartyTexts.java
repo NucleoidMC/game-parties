@@ -5,7 +5,7 @@ import java.util.UUID;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import xyz.nucleoid.plasmid.game.GameTexts;
+import xyz.nucleoid.plasmid.api.game.GameTexts;
 
 public final class PartyTexts {
     public static MutableText displayError(PartyError error, ServerPlayerEntity player) {

@@ -7,8 +7,8 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.jetbrains.annotations.Nullable;
-import xyz.nucleoid.plasmid.event.GameEvents;
-import xyz.nucleoid.plasmid.util.PlayerRef;
+import xyz.nucleoid.plasmid.api.event.GameEvents;
+import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 import java.util.Collection;
 import java.util.Collections;

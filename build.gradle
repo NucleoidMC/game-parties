@@ -1,10 +1,10 @@
 plugins {
-	id 'fabric-loom' version '1.1.+'
+	id 'fabric-loom' version '1.8.+'
 	id 'maven-publish'
 }
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
+sourceCompatibility = JavaVersion.VERSION_21
+targetCompatibility = JavaVersion.VERSION_21
 
 archivesBaseName = project.archives_base_name
 version = project.mod_version
@@ -22,8 +22,8 @@ dependencies {
 
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	modImplementation 'xyz.nucleoid:plasmid:0.5+1.20.1-SNAPSHOT'
-	modImplementation include('xyz.nucleoid:more-codecs:0.3.2+1.20')
+	modImplementation 'xyz.nucleoid:plasmid:0.6.0-SNAPSHOT+1.21.3'
+	modImplementation include('xyz.nucleoid:more-codecs:0.3.5+1.21.2')
 }
 
 processResources {

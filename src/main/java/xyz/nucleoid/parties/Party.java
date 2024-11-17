@@ -3,8 +3,8 @@ package xyz.nucleoid.parties;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.server.MinecraftServer;
-import xyz.nucleoid.plasmid.game.player.MutablePlayerSet;
-import xyz.nucleoid.plasmid.util.PlayerRef;
+import xyz.nucleoid.plasmid.api.game.player.MutablePlayerSet;
+import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 import java.util.List;
 import java.util.Set;
