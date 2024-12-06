@@ -15,6 +15,11 @@ public record PartyMember(Party party, PlayerRef player, Type type) {
         return this.type == Type.OWNER;
     }
 
+    @Override
+    public String toString() {
+        return this.player.id() + " (" + this.type + ")";
+    }
+
     enum Type {
         PENDING,
         MEMBER,
