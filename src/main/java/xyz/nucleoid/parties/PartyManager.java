@@ -12,7 +12,9 @@ import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public final class PartyManager {
     private static PartyManager instance;
@@ -33,8 +35,23 @@ public final class PartyManager {
         GameEvents.COLLECT_PLAYERS_FOR_JOIN.register((gameSpace, player, additional) -> {
             var partyManager = PartyManager.get(player.server);
 
-            var members = partyManager.getPartyMembers(player);
+            var members = partyManager.getPartyMembers(player, true);
             additional.addAll(members);
+        });
+
+        GameEvents.TEAM_SELECTION_LOBBY_FINALIZE.register((gameSpace, allocator, players) -> {
+            var partyManager = PartyManager.get(gameSpace.getServer());
+
+            var ungroupedPlayers = players.stream().collect(Collectors.toCollection(HashSet::new));
+
+            for (ServerPlayerEntity player : players) {
+                if (ungroupedPlayers.contains(player)) {
+                    var members = partyManager.getPartyMembers(player, false);
+
+                    allocator.group(members);
+                    ungroupedPlayers.removeAll(members);
+                }
+            }
         });
     }
 
@@ -211,8 +228,10 @@ public final class PartyManager {
         return new Party(this.server, owner);
     }
 
-    public Collection<ServerPlayerEntity> getPartyMembers(ServerPlayerEntity player) {
-        var party = this.getOwnParty(PlayerRef.of(player));
+    public Collection<ServerPlayerEntity> getPartyMembers(ServerPlayerEntity player, boolean own) {
+        var ref = PlayerRef.of(player);
+        var party = own ? this.getOwnParty(ref) : this.getParty(ref);
+
         if (party != null) {
             return Lists.newArrayList(party.getMemberPlayers());
         } else {
