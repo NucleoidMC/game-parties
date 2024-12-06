@@ -9,10 +9,10 @@ import xyz.nucleoid.plasmid.api.game.GameTexts;
 
 public final class PartyTexts {
     public static MutableText displayError(PartyError error, ServerPlayerEntity player) {
-        return displayError(error, player.getGameProfile().getName());
+        return displayError(error, player.getDisplayName());
     }
 
-    public static MutableText displayError(PartyError error, String player) {
+    public static MutableText displayError(PartyError error, Text player) {
         return switch (error) {
             case DOES_NOT_EXIST -> Text.translatable("text.game_parties.party.error.does_not_exist");
             case ALREADY_INVITED -> Text.translatable("text.game_parties.party.error.already_invited", player);

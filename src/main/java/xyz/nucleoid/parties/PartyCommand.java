@@ -8,6 +8,7 @@ import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.GameProfileArgumentType;
 import net.minecraft.command.argument.UuidArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
@@ -89,7 +90,7 @@ public final class PartyCommand {
                 });
             } else {
                 var error = result.error();
-                source.sendError(PartyTexts.displayError(error, profile.getName()));
+                source.sendError(PartyTexts.displayError(error, Text.literal(profile.getName())));
             }
         }
 
