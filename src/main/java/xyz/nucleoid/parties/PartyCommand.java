@@ -132,7 +132,7 @@ public final class PartyCommand {
         var owner = EntityArgumentType.getPlayer(ctx, "owner");
         var partyManager = PartyManager.get(ctx.getSource().getServer());
 
-        return acceptInvite(ctx, partyManager.getOwnParty(PlayerRef.of(owner)));
+        return acceptInvite(ctx, partyManager.getOwnParty(PlayerRef.of(owner)).replaceError(() -> PartyError.NOT_INVITED));
     }
 
     private static int acceptInviteByUuid(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {

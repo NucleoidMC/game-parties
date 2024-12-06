@@ -110,13 +110,9 @@ public final class PartyManager {
         });
     }
 
-    public PartyResult acceptInvite(PlayerRef player, @Nullable Party party) {
+    public PartyResult acceptInvite(PlayerRef player, Party party) {
         if (this.participantToParty.containsKey(player)) {
             return PartyResult.err(PartyError.ALREADY_IN_PARTY);
-        }
-
-        if (party == null) {
-            return PartyResult.err(PartyError.DOES_NOT_EXIST);
         }
 
         if (party.isPending(player)) {
