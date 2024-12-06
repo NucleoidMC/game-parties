@@ -161,8 +161,9 @@ public final class PartyCommand {
         if (result.isOk()) {
             var party = result.party();
 
-            var message = PartyTexts.leaveSuccess(player);
-            party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
+            var message = PartyTexts.leaveSuccess(player).formatted(Formatting.GOLD);
+            party.getMemberPlayers().sendMessage(message);
+            player.sendMessage(message, false);
         } else {
             var error = result.error();
             source.sendError(PartyTexts.displayError(error, player));
