@@ -41,6 +41,17 @@ public final class PartyCommand {
                 )
                 .then(literal("leave").executes(PartyCommand::leave))
                 .then(literal("disband").executes(PartyCommand::disband))
+                .then(literal("add")
+                    .requires(source -> source.hasPermissionLevel(2))
+                    .then(argument("player", EntityArgumentType.player())
+                        .then(argument("owner", EntityArgumentType.player())
+                            .executes(PartyCommand::addPlayerByOwner)
+                        )
+                        .then(argument("party", UuidArgumentType.uuid())
+                            .executes(PartyCommand::addPlayerByUuid)
+                        )
+                    )
+                )
         );
     }
     // @formatter:on
@@ -185,6 +196,37 @@ public final class PartyCommand {
         } else {
             var error = result.error();
             source.sendError(PartyTexts.displayError(error, owner));
+        }
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int addPlayerByOwner(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        var owner = EntityArgumentType.getPlayer(ctx, "owner");
+        var partyManager = PartyManager.get(ctx.getSource().getServer());
+
+        return addPlayer(ctx, partyManager.getOrCreateOwnParty(PlayerRef.of(owner)));
+    }
+
+    private static int addPlayerByUuid(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        var uuid = UuidArgumentType.getUuid(ctx, "party");
+        var partyManager = PartyManager.get(ctx.getSource().getServer());
+
+        return addPlayer(ctx, partyManager.getParty(uuid));
+    }
+
+    private static int addPlayer(CommandContext<ServerCommandSource> ctx, Party party) throws CommandSyntaxException {
+        var source = ctx.getSource();
+        var player = EntityArgumentType.getPlayer(ctx, "player");
+
+        var partyManager = PartyManager.get(source.getServer());
+        var result = partyManager.addPlayer(PlayerRef.of(player), party);
+        if (result.isOk()) {
+            var message = PartyTexts.addSuccess(player);
+            party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
+        } else {
+            var error = result.error();
+            source.sendError(PartyTexts.displayError(error, player));
         }
 
         return Command.SINGLE_SUCCESS;

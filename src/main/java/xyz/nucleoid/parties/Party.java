@@ -29,9 +29,7 @@ public final class Party {
 
     void setOwner(PlayerRef owner) {
         this.owner = owner;
-        if (this.memberPlayers.add(owner)) {
-            this.members.add(owner);
-        }
+        this.add(owner);
     }
 
     boolean invite(PlayerRef player) {
@@ -39,6 +37,12 @@ public final class Party {
             return false;
         }
         return this.pendingMembers.add(player);
+    }
+
+    void add(PlayerRef player) {
+        if (this.memberPlayers.add(player)) {
+            this.members.add(player);
+        }
     }
 
     boolean remove(PlayerRef player) {
@@ -51,9 +55,7 @@ public final class Party {
 
     boolean acceptInvite(PlayerRef player) {
         if (this.pendingMembers.remove(player)) {
-            if (this.memberPlayers.add(player)) {
-                this.members.add(player);
-            }
+            this.add(player);
             return true;
         }
         return false;
