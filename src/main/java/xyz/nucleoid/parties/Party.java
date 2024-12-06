@@ -52,8 +52,12 @@ public final class Party {
     void putMember(PlayerRef player, PartyMember.Type type) {
         var member = new PartyMember(this, player, type);
 
-        if (member.isParticipant() && this.participantToParty.put(player, this) != null) {
-            throw new IllegalStateException("player is already in a party");
+        if (member.isParticipant()) {
+            var existingParty = this.participantToParty.put(player, this);
+
+            if (existingParty != null && existingParty != this) {
+                throw new IllegalStateException("player is already in a party");
+            }
         }
 
         this.members.put(player, member);
