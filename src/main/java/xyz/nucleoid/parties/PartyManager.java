@@ -77,6 +77,10 @@ public final class PartyManager {
     }
 
     public PartyResult invitePlayer(PlayerRef owner, PlayerRef player) {
+        if (owner.equals(player)) {
+            return PartyResult.err(PartyError.CANNOT_INVITE_SELF);
+        }
+
         var party = this.getOrCreateOwnParty(owner);
         if (party != null) {
             var member = party.getMember(player);
