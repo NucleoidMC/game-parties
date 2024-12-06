@@ -1,39 +1,43 @@
 package xyz.nucleoid.parties;
 
-import org.jetbrains.annotations.Nullable;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
-public final class PartyResult {
-    private final Party party;
-    private final PartyError error;
+public sealed interface PartyResult permits PartyResult.Success, PartyResult.Error {
+    PartyResult map(Function<Party, PartyResult> mapper);
 
-    private PartyResult(Party party, PartyError error) {
-        this.party = party;
-        this.error = error;
+    void ifSuccessElse(Consumer<Party> onSuccess, Consumer<PartyError> onError);
+
+    record Success(Party party) implements PartyResult {
+        public Success {
+            Objects.requireNonNull(party);
+        }
+
+        @Override
+        public PartyResult map(Function<Party, PartyResult> mapper) {
+            return mapper.apply(this.party);
+        }
+
+        @Override
+        public void ifSuccessElse(Consumer<Party> onSuccess, Consumer<PartyError> onError) {
+            onSuccess.accept(this.party);
+        }
     }
 
-    public static PartyResult ok(Party party) {
-        return new PartyResult(party, null);
-    }
+    record Error(PartyError error) implements PartyResult {
+        public Error {
+            Objects.requireNonNull(error);
+        }
 
-    public static PartyResult err(PartyError error) {
-        return new PartyResult(null, error);
-    }
+        @Override
+        public PartyResult map(Function<Party, PartyResult> mapper) {
+            return this;
+        }
 
-    public boolean isOk() {
-        return this.error == null;
-    }
-
-    public boolean isErr() {
-        return this.error != null;
-    }
-
-    @Nullable
-    public Party party() {
-        return this.party;
-    }
-
-    @Nullable
-    public PartyError error() {
-        return this.error;
+        @Override
+        public void ifSuccessElse(Consumer<Party> onSuccess, Consumer<PartyError> onError) {
+            onError.accept(this.error);
+        }
     }
 }
