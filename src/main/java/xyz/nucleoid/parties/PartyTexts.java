@@ -45,8 +45,8 @@ public final class PartyTexts {
         return Text.translatable("text.game_parties.party.transferred.receiver", transferredFrom.getDisplayName());
     }
 
-    public static MutableText kickedSender(ServerPlayerEntity player) {
-        return Text.translatable("text.game_parties.party.kicked.sender", player.getDisplayName());
+    public static MutableText kickedSender(Text playerName) {
+        return Text.translatable("text.game_parties.party.kicked.sender", playerName);
     }
 
     public static MutableText kickedReceiver() {

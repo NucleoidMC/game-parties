@@ -78,16 +78,22 @@ public final class PartyCommand {
 
         for (var profile : profiles) {
             var partyManager = PartyManager.get(source.getServer());
-            var result = partyManager.kickPlayer(PlayerRef.of(owner), PlayerRef.of(profile));
+            var ref = PlayerRef.of(profile);
+            var result = partyManager.kickPlayer(PlayerRef.of(owner), ref);
             if (result.isOk()) {
                 var party = result.party();
 
-                var message = PartyTexts.kickedSender(owner);
-                party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
+                MutableText message;
+                var player = ref.getEntity(server);
 
-                PlayerRef.of(profile).ifOnline(server, player -> {
+                if (player == null) {
+                    message = PartyTexts.kickedSender(Text.literal(profile.getName()));
+                } else {
+                    message = PartyTexts.kickedSender(player.getDisplayName());
                     player.sendMessage(PartyTexts.kickedReceiver().formatted(Formatting.RED), false);
-                });
+                }
+
+                party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
             } else {
                 var error = result.error();
                 source.sendError(PartyTexts.displayError(error, Text.literal(profile.getName())));
