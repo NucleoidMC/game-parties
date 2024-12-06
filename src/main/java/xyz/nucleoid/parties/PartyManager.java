@@ -12,6 +12,7 @@ import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.UUID;
 
 public final class PartyManager {
@@ -218,5 +219,9 @@ public final class PartyManager {
         } else {
             return Collections.singleton(player);
         }
+    }
+
+    public Collection<Party> getAllParties() {
+        return new HashSet<>(this.playerToParty.values());
     }
 }
