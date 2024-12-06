@@ -15,6 +15,7 @@
   "text.game_parties.party.kicked.receiver": "You have been kicked from the party",
   "text.game_parties.party.kicked.sender": "%s has been kicked from the party",
   "text.game_parties.party.leave.success": "%s has left the party!",
+  "text.game_parties.party.remove.success": "%s has been removed from the party",
   "text.game_parties.party.transferred.receiver": "%s's party has been transferred to you",
   "text.game_parties.party.transferred.sender": "Your party has been transferred to %s",
   "text.game_parties.party.left_game": "%s left the game and has been removed from the party!"

@@ -39,6 +39,10 @@ public final class PartyTexts {
         return Text.translatable("text.game_parties.party.add.success", player.getDisplayName());
     }
 
+    public static MutableText removeSuccess(ServerPlayerEntity player) {
+        return Text.translatable("text.game_parties.party.remove.success", player.getDisplayName());
+    }
+
     public static MutableText transferredSender(ServerPlayerEntity transferredTo) {
         return Text.translatable("text.game_parties.party.transferred.sender", transferredTo.getDisplayName());
     }

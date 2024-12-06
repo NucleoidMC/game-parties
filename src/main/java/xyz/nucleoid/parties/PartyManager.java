@@ -198,6 +198,21 @@ public final class PartyManager {
         return PartyResult.ok(party);
     }
 
+    public PartyResult removePlayer(PlayerRef player) {
+        var party = this.getParty(player);
+        if (party == null) {
+            return PartyResult.err(PartyError.NOT_IN_PARTY);
+        }
+
+        if (party.isOwner(player)) {
+            this.disbandParty(player);
+        } else if (party.remove(player)) {
+            this.playerToParty.remove(player, party);
+        }
+
+        return PartyResult.ok(party);
+    }
+
     @Nullable
     public Party getParty(PlayerRef player) {
         return this.playerToParty.get(player);
