@@ -21,6 +21,7 @@ public final class PartyTexts {
             case CANNOT_REMOVE_SELF -> Text.translatable("text.game_parties.party.error.cannot_remove_self");
             case NOT_IN_PARTY -> Text.translatable("text.game_parties.party.error.not_in_party", player);
             case NOT_INVITED -> Text.translatable("text.game_parties.party.error.not_invited");
+            case NOT_OWNER -> Text.translatable("text.game_parties.party.error.not_owner");
         };
     }
 

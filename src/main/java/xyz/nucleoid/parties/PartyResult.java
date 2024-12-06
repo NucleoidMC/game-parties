@@ -2,6 +2,8 @@ package xyz.nucleoid.parties;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 public final class PartyResult {
     private final Party party;
     private final PartyError error;
@@ -25,6 +27,14 @@ public final class PartyResult {
 
     public boolean isErr() {
         return this.error != null;
+    }
+
+    public PartyResult map(Function<Party, PartyResult> mapper) {
+        if (this.party != null) {
+            return mapper.apply(this.party);
+        } else {
+            return this;
+        }
     }
 
     @Nullable

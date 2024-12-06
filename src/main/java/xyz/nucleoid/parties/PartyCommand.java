@@ -132,18 +132,18 @@ public final class PartyCommand {
         var uuid = UuidArgumentType.getUuid(ctx, "party");
         var partyManager = PartyManager.get(ctx.getSource().getServer());
 
-        return acceptInvite(ctx, partyManager.getParty(uuid));
+        return acceptInvite(ctx, PartyResult.ok(partyManager.getParty(uuid)));
     }
 
-    private static int acceptInvite(CommandContext<ServerCommandSource> ctx, Party party) throws CommandSyntaxException {
+    private static int acceptInvite(CommandContext<ServerCommandSource> ctx, PartyResult result) throws CommandSyntaxException {
         var source = ctx.getSource();
         var player = source.getPlayer();
 
         var partyManager = PartyManager.get(source.getServer());
-        var result = partyManager.acceptInvite(PlayerRef.of(player), party);
+        result = result.map(party -> partyManager.acceptInvite(PlayerRef.of(player), party));
         if (result.isOk()) {
             var message = PartyTexts.joinSuccess(player);
-            party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
+            result.party().getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
         } else {
             var error = result.error();
             source.sendError(PartyTexts.displayError(error, player));
