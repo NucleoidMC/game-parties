@@ -194,6 +194,45 @@ public final class PartyManager {
         }
     }
 
+    public PartyResult addPlayer(PlayerRef player, @Nullable Party party) {
+        if (party == null) {
+            return PartyResult.err(PartyError.DOES_NOT_EXIST);
+        }
+
+        var oldParty = this.getParty(player);
+        if (party == oldParty) {
+            return PartyResult.err(PartyError.ALREADY_IN_PARTY);
+        } else if (oldParty != null) {
+            if (party.isOwner(player)) {
+                this.disbandParty(player);
+            } else if (party.remove(player)) {
+                this.playerToParty.remove(player, party);
+            }
+        }
+
+        this.playerToParty.put(player, party);
+        if (!party.acceptInvite(player)) {
+            party.add(player);
+        }
+
+        return PartyResult.ok(party);
+    }
+
+    public PartyResult removePlayer(PlayerRef player) {
+        var party = this.getParty(player);
+        if (party == null) {
+            return PartyResult.err(PartyError.NOT_IN_PARTY);
+        }
+
+        if (party.isOwner(player)) {
+            this.disbandParty(player);
+        } else if (party.remove(player)) {
+            this.playerToParty.remove(player, party);
+        }
+
+        return PartyResult.ok(party);
+    }
+
     @Nullable
     public Party getParty(PlayerRef player) {
         return this.playerToParty.get(player);
@@ -219,7 +258,8 @@ public final class PartyManager {
         return null;
     }
 
-    private Party getOrCreateOwnParty(PlayerRef owner) {
+    @Nullable
+    Party getOrCreateOwnParty(PlayerRef owner) {
         var party = this.playerToParty.computeIfAbsent(owner, this::createParty);
         if (party.isOwner(owner)) {
             return party;
