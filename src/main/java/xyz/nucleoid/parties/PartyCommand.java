@@ -7,9 +7,14 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.GameProfileArgumentType;
 import net.minecraft.command.argument.UuidArgumentType;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import xyz.nucleoid.plasmid.api.util.PlayerRef;
+
+import java.util.ArrayList;
+import java.util.Comparator;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -19,6 +24,10 @@ public final class PartyCommand {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(
             literal("party")
+                .then(literal("list")
+                    .requires(source -> source.hasPermissionLevel(2))
+                    .executes(PartyCommand::listParties)
+                )
                 .then(literal("invite")
                     .then(argument("player", EntityArgumentType.player())
                     .executes(PartyCommand::invitePlayer)
@@ -44,6 +53,55 @@ public final class PartyCommand {
         );
     }
     // @formatter:on
+
+    private static int listParties(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        var source = ctx.getSource();
+        var server = source.getServer();
+
+        var partyManager = PartyManager.get(server);
+        var parties = new ArrayList<>(partyManager.getAllParties());
+
+        if (parties.isEmpty()) {
+            source.sendError(PartyTexts.noParties());
+            return 0;
+        }
+
+        parties.sort(Comparator.comparing(Party::getUuid));
+
+        source.sendFeedback(() -> {
+            var text = Text.empty();
+            boolean first = true;
+
+            for (var party : parties) {
+                if (first) {
+                    first = false;
+                } else {
+                    text.append(ScreenTexts.LINE_BREAK);
+                }
+
+                text.append(PartyTexts.listEntry(party.getUuid()));
+
+                var members = new ArrayList<>(party.getMembers());
+                members.sort(Comparator.comparing(PlayerRef::id));
+
+                for (var member : members) {
+                    text.append(ScreenTexts.LINE_BREAK);
+
+                    if (party.isOwner(member)) {
+                        text.append(PartyTexts.listMemberEntryType(member, server, PartyTexts.listMemberTypeOwner().formatted(Formatting.LIGHT_PURPLE)));
+                    } else if (party.contains(member)) {
+                        text.append(PartyTexts.listMemberEntry(member, server));
+                    } else {
+                        text.append(PartyTexts.listMemberEntryType(member, server, PartyTexts.listMemberTypePending().formatted(Formatting.GRAY)));
+                    }
+                }
+            }
+
+            return text;
+        }, false);
+
+        return parties.size();
+    }
 
     private static int invitePlayer(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();

@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.UUID;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public final class PartyManager {
@@ -36,6 +37,8 @@ public final class PartyManager {
             var partyManager = PartyManager.get(player.server);
 
             var members = partyManager.getPartyMembers(player, true);
+            Collections.shuffle((List<ServerPlayerEntity>) members);
+            
             additional.addAll(members);
         });
 
@@ -237,5 +240,9 @@ public final class PartyManager {
         } else {
             return Collections.singleton(player);
         }
+    }
+
+    public Collection<Party> getAllParties() {
+        return new HashSet<>(this.playerToParty.values());
     }
 }
