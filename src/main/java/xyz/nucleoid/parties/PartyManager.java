@@ -37,7 +37,6 @@ public final class PartyManager {
             var partyManager = PartyManager.get(player.server);
 
             var members = partyManager.getPartyMembers(player, true);
-            Collections.shuffle((List<ServerPlayerEntity>) members);
             
             additional.addAll(members);
         });
