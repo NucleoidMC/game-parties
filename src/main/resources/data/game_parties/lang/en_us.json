@@ -1,4 +1,5 @@
 {
+  "text.game_parties.party.add.success": "%s has been added to the party!",
   "text.game_parties.party.disband.success": "Your party has been disbanded!",
   "text.game_parties.party.error.already_in_party": "You are already in this party!",
   "text.game_parties.party.error.already_invited": "%s is already invited to this party!",
@@ -16,6 +17,13 @@
   "text.game_parties.party.kicked.receiver": "You have been kicked from the party",
   "text.game_parties.party.kicked.sender": "%s has been kicked from the party",
   "text.game_parties.party.leave.success": "%s has left the party!",
+  "text.game_parties.party.list.entry": " - Party %s",
+  "text.game_parties.party.list.member.entry": "   - %s",
+  "text.game_parties.party.list.member.entry.type": "   - %s (%s)",
+  "text.game_parties.party.list.member.type.owner": "owner",
+  "text.game_parties.party.list.member.type.pending": "pending",
+  "text.game_parties.party.list.none": "There are no parties!",
+  "text.game_parties.party.remove.success": "%s has been removed from the party",
   "text.game_parties.party.transferred.receiver": "%s's party has been transferred to you",
   "text.game_parties.party.transferred.sender": "Your party has been transferred to %s",
   "text.game_parties.party.left_game": "%s left the game and has been removed from the party!"

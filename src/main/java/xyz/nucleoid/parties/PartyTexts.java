@@ -2,10 +2,14 @@ package xyz.nucleoid.parties;
 
 import java.util.UUID;
 
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.text.Texts;
+import net.minecraft.util.Formatting;
 import xyz.nucleoid.plasmid.api.game.GameTexts;
+import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 public final class PartyTexts {
     public static MutableText displayError(PartyError error, ServerPlayerEntity player) {
@@ -35,6 +39,14 @@ public final class PartyTexts {
 
     public static MutableText disbandSuccess() {
         return Text.translatable("text.game_parties.party.disband.success");
+    }
+
+    public static MutableText addSuccess(ServerPlayerEntity player) {
+        return Text.translatable("text.game_parties.party.add.success", player.getDisplayName());
+    }
+
+    public static MutableText removeSuccess(ServerPlayerEntity player) {
+        return Text.translatable("text.game_parties.party.remove.success", player.getDisplayName());
     }
 
     public static MutableText transferredSender(ServerPlayerEntity transferredTo) {
@@ -72,5 +84,39 @@ public final class PartyTexts {
 
     public static MutableText leftGame(ServerPlayerEntity player) {
         return Text.translatable("text.game_parties.party.left_game", player.getDisplayName());
+    }
+
+    public static MutableText noParties() {
+        return Text.translatable("text.game_parties.party.list.none");
+    }
+
+    public static MutableText listEntry(UUID uuid) {
+        return Text.translatable("text.game_parties.party.list.entry", Texts.bracketedCopyable(uuid.toString()));
+    }
+
+    public static MutableText listMemberEntry(PlayerRef member, MinecraftServer server) {
+        return Text.translatable("text.game_parties.party.list.member.entry", name(member, server));
+    }
+
+    public static MutableText listMemberEntryType(PlayerRef member, MinecraftServer server, Text type) {
+        return Text.translatable("text.game_parties.party.list.member.entry.type", name(member, server), type);
+    }
+
+    public static MutableText listMemberTypeOwner() {
+        return Text.translatable("text.game_parties.party.list.member.type.owner");
+    }
+
+    public static MutableText listMemberTypePending() {
+        return Text.translatable("text.game_parties.party.list.member.type.pending");
+    }
+
+    private static Text name(PlayerRef ref, MinecraftServer server) {
+        var player = ref.getEntity(server);
+        if (player == null) {
+            Text id = Text.literal(ref.id().toString());
+            return Texts.bracketed(id).formatted(Formatting.GRAY);
+        }
+
+        return player.getDisplayName();
     }
 }

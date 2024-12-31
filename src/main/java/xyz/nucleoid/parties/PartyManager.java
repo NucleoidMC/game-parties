@@ -12,7 +12,10 @@ import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public final class PartyManager {
     private static PartyManager instance;
@@ -33,8 +36,24 @@ public final class PartyManager {
         GameEvents.COLLECT_PLAYERS_FOR_JOIN.register((gameSpace, player, additional) -> {
             var partyManager = PartyManager.get(player.server);
 
-            var members = partyManager.getPartyMembers(player);
+            var members = partyManager.getPartyMembers(player, true);
+            
             additional.addAll(members);
+        });
+
+        GameEvents.TEAM_SELECTION_LOBBY_FINALIZE.register((gameSpace, allocator, players) -> {
+            var partyManager = PartyManager.get(gameSpace.getServer());
+
+            var ungroupedPlayers = players.stream().collect(Collectors.toCollection(HashSet::new));
+
+            for (ServerPlayerEntity player : players) {
+                if (ungroupedPlayers.contains(player)) {
+                    var members = partyManager.getPartyMembers(player, false);
+
+                    allocator.group(members);
+                    ungroupedPlayers.removeAll(members);
+                }
+            }
         });
     }
 
@@ -173,6 +192,42 @@ public final class PartyManager {
         }
     }
 
+    public PartyResult addPlayer(PlayerRef player, @Nullable Party party) {
+        if (party == null) {
+            return new PartyResult.Error(PartyError.DOES_NOT_EXIST);
+        }
+
+        var oldParty = this.getParty(player);
+        if (party == oldParty) {
+            return new PartyResult.Error(PartyError.ALREADY_IN_PARTY);
+        } else if (oldParty != null) {
+            if (oldParty.isOwner(player)) {
+                this.disbandParty(player);
+            } else {
+                oldParty.removeMember(player);
+            }
+        }
+
+        party.putMember(player, PartyMember.Type.MEMBER);
+
+        return new PartyResult.Success(party);
+    }
+
+    public PartyResult removePlayer(PlayerRef player) {
+        var party = this.getParty(player);
+        if (party == null) {
+            return new PartyResult.Error(PartyError.NOT_IN_PARTY);
+        }
+
+        if (party.isOwner(player)) {
+            this.disbandParty(player);
+        } else {
+            party.removeMember(player);
+        }
+
+        return new PartyResult.Success(party);
+    }
+
     @Nullable
     public Party getParty(PlayerRef player) {
         return this.participantToParty.get(player);
@@ -200,7 +255,7 @@ public final class PartyManager {
         return new PartyResult.Success(party);
     }
 
-    private PartyResult getOrCreateOwnParty(PlayerRef owner) {
+    public PartyResult getOrCreateOwnParty(PlayerRef owner) {
         var party = this.participantToParty.computeIfAbsent(owner, this::createParty);
         if (party.isOwner(owner)) {
             return new PartyResult.Success(party);
@@ -212,12 +267,18 @@ public final class PartyManager {
         return new Party(this.server, this.participantToParty, owner);
     }
 
-    public Collection<ServerPlayerEntity> getPartyMembers(ServerPlayerEntity player) {
-        var result = this.getOwnParty(PlayerRef.of(player), null);
+    public Collection<ServerPlayerEntity> getPartyMembers(ServerPlayerEntity player, boolean own) {
+        var ref = PlayerRef.of(player);
+        var result = own ? this.getOwnParty(PlayerRef.of(player), null) : this.getParty(ref);
+
         if (result instanceof PartyResult.Success success) {
             return Lists.newArrayList(success.party().getMemberPlayers());
         } else {
             return Collections.singleton(player);
         }
+    }
+
+    public Collection<Party> getAllParties() {
+        return new HashSet<>(this.participantToParty.values());
     }
 }

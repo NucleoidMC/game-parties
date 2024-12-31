@@ -7,11 +7,15 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.GameProfileArgumentType;
 import net.minecraft.command.argument.UuidArgumentType;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import xyz.nucleoid.plasmid.api.util.PlayerRef;
+
+import java.util.ArrayList;
+import java.util.Comparator;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -21,6 +25,10 @@ public final class PartyCommand {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(
             literal("party")
+                .then(literal("list")
+                    .requires(source -> source.hasPermissionLevel(2))
+                    .executes(PartyCommand::listParties)
+                )
                 .then(literal("invite")
                     .then(argument("player", EntityArgumentType.player())
                     .executes(PartyCommand::invitePlayer)
@@ -43,9 +51,78 @@ public final class PartyCommand {
                 )
                 .then(literal("leave").executes(PartyCommand::leave))
                 .then(literal("disband").executes(PartyCommand::disband))
+                .then(literal("add")
+                    .requires(source -> source.hasPermissionLevel(2))
+                    .then(argument("player", EntityArgumentType.player())
+                        .then(argument("owner", EntityArgumentType.player())
+                            .executes(PartyCommand::addPlayerByOwner)
+                        )
+                        .then(argument("party", UuidArgumentType.uuid())
+                            .executes(PartyCommand::addPlayerByUuid)
+                        )
+                    )
+                )
+                .then(literal("remove")
+                    .requires(source -> source.hasPermissionLevel(2))
+                    .then(argument("player", EntityArgumentType.player())
+                    .executes(PartyCommand::removePlayer)
+                ))
         );
     }
     // @formatter:on
+
+    private static int listParties(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        var source = ctx.getSource();
+        var server = source.getServer();
+
+        var partyManager = PartyManager.get(server);
+        var parties = new ArrayList<>(partyManager.getAllParties());
+
+        if (parties.isEmpty()) {
+            source.sendError(PartyTexts.noParties());
+            return 0;
+        }
+
+        parties.sort(Comparator.comparing(Party::getUuid));
+
+        source.sendFeedback(() -> {
+            var text = Text.empty();
+            boolean first = true;
+
+            for (var party : parties) {
+                if (first) {
+                    first = false;
+                } else {
+                    text.append(ScreenTexts.LINE_BREAK);
+                }
+
+                text.append(PartyTexts.listEntry(party.getUuid()));
+
+                var members = new ArrayList<>(party.getMembers());
+                members.sort(Comparator.comparing(PlayerRef::id));
+
+                for (var memberRef : members) {
+                    text.append(ScreenTexts.LINE_BREAK);
+
+                    var member = party.getMember(memberRef);
+
+                    if (member != null) {
+                        if (member.isOwner()) {
+                            text.append(PartyTexts.listMemberEntryType(memberRef, server, PartyTexts.listMemberTypeOwner().formatted(Formatting.LIGHT_PURPLE)));
+                        } else if (member.isParticipant()) {
+                            text.append(PartyTexts.listMemberEntry(memberRef, server));
+                        } else {
+                            text.append(PartyTexts.listMemberEntryType(memberRef, server, PartyTexts.listMemberTypePending().formatted(Formatting.GRAY)));
+                        }
+                    }
+                }
+            }
+
+            return text;
+        }, false);
+
+        return parties.size();
+    }
 
     private static int invitePlayer(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();
@@ -183,6 +260,53 @@ public final class PartyCommand {
             party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
         }, error -> {
             source.sendError(PartyTexts.displayError(error, owner));
+        });
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int addPlayerByOwner(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        var owner = EntityArgumentType.getPlayer(ctx, "owner");
+        var partyManager = PartyManager.get(ctx.getSource().getServer());
+
+        return addPlayer(ctx, partyManager.getOrCreateOwnParty(PlayerRef.of(owner)));
+    }
+
+    private static int addPlayerByUuid(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        var uuid = UuidArgumentType.getUuid(ctx, "party");
+        var partyManager = PartyManager.get(ctx.getSource().getServer());
+
+        return addPlayer(ctx, partyManager.getParty(uuid, PartyError.DOES_NOT_EXIST));
+    }
+
+    private static int addPlayer(CommandContext<ServerCommandSource> ctx, PartyResult result) throws CommandSyntaxException {
+        var source = ctx.getSource();
+        var player = EntityArgumentType.getPlayer(ctx, "player");
+
+        var partyManager = PartyManager.get(source.getServer());
+        result.map(party -> {
+            return partyManager.addPlayer(PlayerRef.of(player), party);
+        }).ifSuccessElse(party -> {
+            var message = PartyTexts.addSuccess(player);
+            party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
+        }, error -> {
+            source.sendError(PartyTexts.displayError(error, player));
+        });
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int removePlayer(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        var source = ctx.getSource();
+        var player = EntityArgumentType.getPlayer(ctx, "player");
+
+        var partyManager = PartyManager.get(source.getServer());
+        var result = partyManager.removePlayer(PlayerRef.of(player));
+        result.ifSuccessElse(party -> {
+            var message = PartyTexts.removeSuccess(player);
+            party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
+        }, error -> {
+            source.sendError(PartyTexts.displayError(error, player));
         });
 
         return Command.SINGLE_SUCCESS;
