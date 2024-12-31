@@ -15,6 +15,26 @@ repositories {
 	maven { url = "https://maven.gegy.dev/" }
 }
 
+sourceSets {
+	gametest {
+		compileClasspath += main.compileClasspath
+		runtimeClasspath += main.runtimeClasspath
+	}
+}
+
+loom {
+	runs {
+		gametest {
+			server()
+			name "Game Test"
+			vmArg "-Dfabric-api.gametest"
+			vmArg "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml"
+			runDir "build/gametest"
+			source sourceSets.gametest
+		}
+	}
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -24,6 +44,8 @@ dependencies {
 
 	modImplementation 'xyz.nucleoid:plasmid:0.6.3-SNAPSHOT+1.21.4'
 	modImplementation include('xyz.nucleoid:more-codecs:0.3.5+1.21.2')
+
+	gametestImplementation sourceSets.main.output
 }
 
 processResources {

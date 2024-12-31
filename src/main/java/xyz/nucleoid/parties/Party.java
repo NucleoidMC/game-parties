@@ -1,5 +1,6 @@
 package xyz.nucleoid.parties;
 
+import com.google.common.annotations.VisibleForTesting;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -17,7 +18,7 @@ public final class Party {
     private final Object2ObjectMap<PlayerRef, Party> participantToParty;
     private final Object2ObjectMap<PlayerRef, PartyMember> members = new Object2ObjectOpenHashMap<>();
 
-    private final UUID uuid;
+    private UUID uuid;
 
     Party(MinecraftServer server, Object2ObjectMap<PlayerRef, Party> participantToParty, PlayerRef owner) {
         this.memberPlayers = new MutablePlayerSet(server);
@@ -88,6 +89,11 @@ public final class Party {
 
     public UUID getUuid() {
         return this.uuid;
+    }
+
+    @VisibleForTesting
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
     }
 
     @Override

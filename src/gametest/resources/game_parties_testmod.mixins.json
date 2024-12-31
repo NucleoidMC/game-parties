@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "xyz.nucleoid.parties.test.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "PlayerManagerAccessor",
+    "MinecraftServerAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
