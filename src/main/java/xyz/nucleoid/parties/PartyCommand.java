@@ -99,22 +99,11 @@ public final class PartyCommand {
                 text.append(PartyTexts.listEntry(party.getUuid()));
 
                 var members = new ArrayList<>(party.getMembers());
-                members.sort(Comparator.comparing(PlayerRef::id));
+                members.sort(null);
 
-                for (var memberRef : members) {
+                for (var member : members) {
                     text.append(ScreenTexts.LINE_BREAK);
-
-                    var member = party.getMember(memberRef);
-
-                    if (member != null) {
-                        if (member.isOwner()) {
-                            text.append(PartyTexts.listMemberEntryType(memberRef, server, PartyTexts.listMemberTypeOwner().formatted(Formatting.LIGHT_PURPLE)));
-                        } else if (member.isParticipant()) {
-                            text.append(PartyTexts.listMemberEntry(memberRef, server));
-                        } else {
-                            text.append(PartyTexts.listMemberEntryType(memberRef, server, PartyTexts.listMemberTypePending().formatted(Formatting.GRAY)));
-                        }
-                    }
+                    text.append(member.getListEntry(server));
                 }
             }
 

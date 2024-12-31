@@ -63,8 +63,8 @@ public class GamePartiesTest {
 
         CommandAssertion.builder(context, player1, "/party list")
             .expectFeedback(" - Party [10a05e00-5992-448c-9bed-a14cb2a7a909]")
-            .expectFeedback("   - Player2 (pending)")
             .expectFeedback("   - Player1 (owner)")
+            .expectFeedback("   - Player2 (pending)")
             .execute(1);
 
         CommandAssertion.builder(context, player2, "/party accept Player3")
@@ -77,8 +77,8 @@ public class GamePartiesTest {
 
         CommandAssertion.builder(context, player1, "/party list")
             .expectFeedback(" - Party [10a05e00-5992-448c-9bed-a14cb2a7a909]")
-            .expectFeedback("   - Player2")
             .expectFeedback("   - Player1 (owner)")
+            .expectFeedback("   - Player2")
             .execute(1);
 
         CommandAssertion.builder(context, player1, "/party invite Player4")
@@ -107,10 +107,10 @@ public class GamePartiesTest {
 
         CommandAssertion.builder(context, player1, "/party list")
             .expectFeedback(" - Party [10a05e00-5992-448c-9bed-a14cb2a7a909]")
-            .expectFeedback("   - Player5 (pending)")
             .expectFeedback("   - Player2 (owner)")
-            .expectFeedback("   - Player4 (pending)")
             .expectFeedback("   - Player1")
+            .expectFeedback("   - Player5 (pending)")
+            .expectFeedback("   - Player4 (pending)")
             .execute(1);
 
         // Selectors are used for game profile arguments to bypass oddities with looking up game profiles from API services
@@ -141,9 +141,9 @@ public class GamePartiesTest {
 
         CommandAssertion.builder(context, player1, "/party list")
             .expectFeedback(" - Party [10a05e00-5992-448c-9bed-a14cb2a7a909]")
-            .expectFeedback("   - Player5 (pending)")
             .expectFeedback("   - Player2 (owner)")
             .expectFeedback("   - Player4")
+            .expectFeedback("   - Player5 (pending)")
             .execute(1);
 
         CommandAssertion.builder(context, player4, "/party leave")
@@ -156,8 +156,8 @@ public class GamePartiesTest {
 
         CommandAssertion.builder(context, player1, "/party list")
             .expectFeedback(" - Party [10a05e00-5992-448c-9bed-a14cb2a7a909]")
-            .expectFeedback("   - Player5 (pending)")
             .expectFeedback("   - Player2 (owner)")
+            .expectFeedback("   - Player5 (pending)")
             .execute(1);
 
         context.complete();

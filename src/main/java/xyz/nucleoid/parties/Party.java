@@ -79,8 +79,8 @@ public final class Party {
         return member;
     }
 
-    public List<PlayerRef> getMembers() {
-        return new ObjectArrayList<>(this.members.keySet());
+    public List<PartyMember> getMembers() {
+        return new ObjectArrayList<>(this.members.values());
     }
 
     public MutablePlayerSet getMemberPlayers() {

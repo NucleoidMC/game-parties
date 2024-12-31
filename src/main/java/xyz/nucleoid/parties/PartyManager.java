@@ -87,9 +87,9 @@ public final class PartyManager {
 
         if (!members.isEmpty()) {
             var nextMember = members.get(0);
-            party.putMember(nextMember, PartyMember.Type.OWNER);
+            party.putMember(nextMember.player(), PartyMember.Type.OWNER);
 
-            nextMember.ifOnline(this.server, nextPlayer -> {
+            nextMember.player().ifOnline(this.server, nextPlayer -> {
                 nextPlayer.sendMessage(PartyTexts.transferredReceiver(player), false);
             });
         }
@@ -187,7 +187,7 @@ public final class PartyManager {
     }
 
     public void disbandParty(Party party) {
-        for (PlayerRef member : party.getMembers()) {
+        for (var member : party.getMembers()) {
             this.participantToParty.remove(member, party);
         }
     }
