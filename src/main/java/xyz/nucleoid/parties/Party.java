@@ -1,76 +1,86 @@
 package xyz.nucleoid.parties;
 
+import com.google.common.annotations.VisibleForTesting;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.server.MinecraftServer;
 import xyz.nucleoid.plasmid.api.game.player.MutablePlayerSet;
 import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 public final class Party {
-    private PlayerRef owner;
-
-    private final List<PlayerRef> members = new ObjectArrayList<>();
-    private final Set<PlayerRef> pendingMembers = new ObjectOpenHashSet<>();
-
     private final MutablePlayerSet memberPlayers;
 
-    private final UUID uuid;
+    private final Object2ObjectMap<PlayerRef, Party> participantToParty;
+    private final Object2ObjectMap<PlayerRef, PartyMember> members = new Object2ObjectOpenHashMap<>();
 
-    Party(MinecraftServer server, PlayerRef owner) {
+    private UUID uuid;
+
+    Party(MinecraftServer server, Object2ObjectMap<PlayerRef, Party> participantToParty, PlayerRef owner) {
         this.memberPlayers = new MutablePlayerSet(server);
-        this.setOwner(owner);
+
+        this.participantToParty = participantToParty;
+        this.putMember(owner, PartyMember.Type.OWNER);
 
         this.uuid = UUID.randomUUID();
     }
 
-    void setOwner(PlayerRef owner) {
-        this.owner = owner;
-        this.add(owner);
+    PartyMember getMember(PlayerRef player) {
+        return this.members.get(player);
     }
 
-    boolean invite(PlayerRef player) {
-        if (this.memberPlayers.contains(player)) {
-            return false;
+    private boolean matches(PlayerRef player, Predicate<PartyMember> predicate) {
+        var member = this.members.get(player);
+        return member != null && predicate.test(member);
+    }
+
+    boolean isPending(PlayerRef player) {
+        return this.matches(player, PartyMember::isPending);
+    }
+
+    boolean isParticipant(PlayerRef player) {
+        return this.matches(player, PartyMember::isParticipant);
+    }
+
+    boolean isOwner(PlayerRef player) {
+        return this.matches(player, PartyMember::isOwner);
+    }
+
+    void putMember(PlayerRef player, PartyMember.Type type) {
+        var member = new PartyMember(this, player, type);
+
+        if (member.isParticipant()) {
+            var existingParty = this.participantToParty.put(player, this);
+
+            if (existingParty != null && existingParty != this) {
+                throw new IllegalStateException("player is already in a party");
+            }
         }
-        return this.pendingMembers.add(player);
-    }
 
-    void add(PlayerRef player) {
-        if (this.memberPlayers.add(player)) {
-            this.members.add(player);
+        this.members.put(player, member);
+
+        if (member.isParticipant()) {
+            this.memberPlayers.add(player);
         }
     }
 
-    boolean remove(PlayerRef player) {
-        if (this.memberPlayers.remove(player)) {
-            this.members.remove(player);
-            return true;
+    PartyMember removeMember(PlayerRef player) {
+        var member = this.members.remove(player);
+        this.memberPlayers.remove(player);
+
+        if (member != null && member.isParticipant() && !this.participantToParty.remove(player, this)) {
+            throw new IllegalStateException("player is not in this party");
         }
-        return this.pendingMembers.remove(player);
+
+        return member;
     }
 
-    boolean acceptInvite(PlayerRef player) {
-        if (this.pendingMembers.remove(player)) {
-            this.add(player);
-            return true;
-        }
-        return false;
-    }
-
-    public boolean contains(PlayerRef player) {
-        return this.memberPlayers.contains(player);
-    }
-
-    public boolean isOwner(PlayerRef from) {
-        return from.equals(this.owner);
-    }
-
-    public List<PlayerRef> getMembers() {
-        return this.members;
+    public List<PartyMember> getMembers() {
+        return new ObjectArrayList<>(this.members.values());
     }
 
     public MutablePlayerSet getMemberPlayers() {
@@ -79,5 +89,15 @@ public final class Party {
 
     public UUID getUuid() {
         return this.uuid;
+    }
+
+    @VisibleForTesting
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
+    }
+
+    @Override
+    public String toString() {
+        return "Party{members=" + members + ", uuid=" + uuid + "}";
     }
 }

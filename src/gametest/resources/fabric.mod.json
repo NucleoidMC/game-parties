@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "game_parties_testmod",
+  "version": "${version}",
+  "name": "Game Parties Testmod",
+  "entrypoints": {
+    "fabric-gametest": ["xyz.nucleoid.parties.test.GamePartiesTest"]
+  },
+  "mixins": [
+    "game_parties_testmod.mixins.json"
+  ]
+}

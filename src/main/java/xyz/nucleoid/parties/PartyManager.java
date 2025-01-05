@@ -21,7 +21,7 @@ public final class PartyManager {
     private static PartyManager instance;
 
     private final MinecraftServer server;
-    private final Object2ObjectMap<PlayerRef, Party> playerToParty = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<PlayerRef, Party> participantToParty = new Object2ObjectOpenHashMap<>();
 
     private PartyManager(MinecraftServer server) {
         this.server = server;
@@ -67,13 +67,14 @@ public final class PartyManager {
     public void onPlayerLogOut(ServerPlayerEntity player) {
         var ref = PlayerRef.of(player);
 
-        var party = this.playerToParty.remove(ref);
+        var party = this.getParty(ref);
         if (party == null) {
             return;
         }
 
-        if (party.remove(ref)) {
-            if (party.isOwner(ref)) {
+        var member = party.removeMember(ref);
+        if (member != null) {
+            if (member.isOwner()) {
                 this.onPartyOwnerLogOut(player, party);
             }
 
@@ -86,202 +87,198 @@ public final class PartyManager {
 
         if (!members.isEmpty()) {
             var nextMember = members.get(0);
-            party.setOwner(nextMember);
+            party.putMember(nextMember.player(), PartyMember.Type.OWNER);
 
-            nextMember.ifOnline(this.server, nextPlayer -> {
+            nextMember.player().ifOnline(this.server, nextPlayer -> {
                 nextPlayer.sendMessage(PartyTexts.transferredReceiver(player), false);
             });
         }
     }
 
     public PartyResult invitePlayer(PlayerRef owner, PlayerRef player) {
-        var party = this.getOrCreateOwnParty(owner);
-        if (party != null) {
-            if (party.invite(player)) {
-                return PartyResult.ok(party);
-            } else {
-                return PartyResult.err(PartyError.ALREADY_INVITED);
-            }
+        if (owner.equals(player)) {
+            return new PartyResult.Error(PartyError.CANNOT_INVITE_SELF);
         }
 
-        return PartyResult.err(PartyError.DOES_NOT_EXIST);
+        var result = this.getOrCreateOwnParty(owner);
+
+        return result.map(party -> {
+            var member = party.getMember(player);
+            if (member == null) {
+                party.putMember(player, PartyMember.Type.PENDING);
+                return new PartyResult.Success(party);
+            } else {
+                return new PartyResult.Error(PartyError.ALREADY_INVITED);
+            }
+        });
     }
 
     public PartyResult kickPlayer(PlayerRef owner, PlayerRef player) {
         if (owner.equals(player)) {
-            return PartyResult.err(PartyError.CANNOT_REMOVE_SELF);
+            return new PartyResult.Error(PartyError.CANNOT_REMOVE_SELF);
         }
 
-        var party = this.getOwnParty(owner);
-        if (party == null) {
-            return PartyResult.err(PartyError.DOES_NOT_EXIST);
-        }
+        var result = this.getOwnParty(owner, null);
 
-        if (party.remove(player)) {
-            this.playerToParty.remove(player, party);
-            return PartyResult.ok(party);
-        }
+        return result.map(party -> {
+            if (party.removeMember(player) != null) {
+                return new PartyResult.Success(party);
+            }
 
-        return PartyResult.err(PartyError.NOT_IN_PARTY);
+            return new PartyResult.Error(PartyError.NOT_IN_PARTY);
+        });
     }
 
-    public PartyResult acceptInvite(PlayerRef player, @Nullable Party party) {
-        if (this.playerToParty.containsKey(player)) {
-            return PartyResult.err(PartyError.ALREADY_IN_PARTY);
+    public PartyResult acceptInvite(PlayerRef player, Party party) {
+        if (this.participantToParty.containsKey(player)) {
+            return new PartyResult.Error(PartyError.ALREADY_IN_PARTY);
         }
 
-        if (party == null) {
-            return PartyResult.err(PartyError.DOES_NOT_EXIST);
+        if (party.isPending(player)) {
+            party.putMember(player, PartyMember.Type.MEMBER);
+            return new PartyResult.Success(party);
         }
 
-        if (party.acceptInvite(player)) {
-            this.playerToParty.put(player, party);
-            return PartyResult.ok(party);
-        }
-
-        return PartyResult.err(PartyError.NOT_INVITED);
+        return new PartyResult.Error(PartyError.NOT_INVITED);
     }
 
     public PartyResult leaveParty(PlayerRef player) {
         var party = this.getParty(player);
         if (party == null) {
-            return PartyResult.err(PartyError.DOES_NOT_EXIST);
+            return new PartyResult.Error(PartyError.DOES_NOT_EXIST);
         }
 
         if (party.isOwner(player)) {
             if (party.getMembers().size() > 1) {
-                return PartyResult.err(PartyError.CANNOT_REMOVE_SELF);
+                return new PartyResult.Error(PartyError.CANNOT_REMOVE_SELF);
             }
             return this.disbandParty(player);
         }
 
-        if (party.remove(player)) {
-            this.playerToParty.remove(player, party);
-            return PartyResult.ok(party);
+        if (party.removeMember(player) != null) {
+            return new PartyResult.Success(party);
         } else {
-            return PartyResult.err(PartyError.NOT_IN_PARTY);
+            return new PartyResult.Error(PartyError.NOT_IN_PARTY);
         }
     }
 
     public PartyResult transferParty(PlayerRef from, PlayerRef to) {
-        var party = this.getOwnParty(from);
-        if (party == null) {
-            return PartyResult.err(PartyError.DOES_NOT_EXIST);
-        }
+        var result = this.getOwnParty(from, null);
 
-        if (!party.contains(to)) {
-            return PartyResult.err(PartyError.NOT_IN_PARTY);
-        }
+        return result.map(party -> {
+            if (!party.isParticipant(to)) {
+                return new PartyResult.Error(PartyError.NOT_IN_PARTY);
+            }
 
-        party.setOwner(to);
-        return PartyResult.ok(party);
+            party.putMember(from, PartyMember.Type.MEMBER);
+            party.putMember(to, PartyMember.Type.OWNER);
+
+            return new PartyResult.Success(party);
+        });
     }
 
     public PartyResult disbandParty(PlayerRef owner) {
-        var party = this.getOwnParty(owner);
-        if (party != null) {
+        var result = this.getOwnParty(owner, null);
+
+        return result.map(party -> {
             this.disbandParty(party);
-            return PartyResult.ok(party);
-        } else {
-            return PartyResult.err(PartyError.DOES_NOT_EXIST);
-        }
+            return new PartyResult.Success(party);
+        });
     }
 
     public void disbandParty(Party party) {
-        for (PlayerRef member : party.getMembers()) {
-            this.playerToParty.remove(member, party);
+        for (var member : party.getMembers()) {
+            this.participantToParty.remove(member, party);
         }
     }
 
     public PartyResult addPlayer(PlayerRef player, @Nullable Party party) {
         if (party == null) {
-            return PartyResult.err(PartyError.DOES_NOT_EXIST);
+            return new PartyResult.Error(PartyError.DOES_NOT_EXIST);
         }
 
         var oldParty = this.getParty(player);
         if (party == oldParty) {
-            return PartyResult.err(PartyError.ALREADY_IN_PARTY);
+            return new PartyResult.Error(PartyError.ALREADY_IN_PARTY);
         } else if (oldParty != null) {
-            if (party.isOwner(player)) {
+            if (oldParty.isOwner(player)) {
                 this.disbandParty(player);
-            } else if (party.remove(player)) {
-                this.playerToParty.remove(player, party);
+            } else {
+                oldParty.removeMember(player);
             }
         }
 
-        this.playerToParty.put(player, party);
-        if (!party.acceptInvite(player)) {
-            party.add(player);
-        }
+        party.putMember(player, PartyMember.Type.MEMBER);
 
-        return PartyResult.ok(party);
+        return new PartyResult.Success(party);
     }
 
     public PartyResult removePlayer(PlayerRef player) {
         var party = this.getParty(player);
         if (party == null) {
-            return PartyResult.err(PartyError.NOT_IN_PARTY);
+            return new PartyResult.Error(PartyError.NOT_IN_PARTY);
         }
 
         if (party.isOwner(player)) {
             this.disbandParty(player);
-        } else if (party.remove(player)) {
-            this.playerToParty.remove(player, party);
+        } else {
+            party.removeMember(player);
         }
 
-        return PartyResult.ok(party);
+        return new PartyResult.Success(party);
     }
 
     @Nullable
     public Party getParty(PlayerRef player) {
-        return this.playerToParty.get(player);
+        return this.participantToParty.get(player);
     }
 
-    @Nullable
-    public Party getParty(UUID uuid) {
-        for (Party party : this.playerToParty.values()) {
+    public PartyResult getParty(UUID uuid, PartyError error) {
+        for (Party party : this.participantToParty.values()) {
             if (party.getUuid().equals(uuid)) {
-                return party;
+                return new PartyResult.Success(party);
             }
         }
 
-        return null;
+        return new PartyResult.Error(error);
     }
 
-    @Nullable
-    public Party getOwnParty(PlayerRef owner) {
-        var party = this.playerToParty.get(owner);
-        if (party != null && party.isOwner(owner)) {
-            return party;
+    public PartyResult getOwnParty(PlayerRef owner, @Nullable PartyError error) {
+        var party = this.participantToParty.get(owner);
+
+        if (party == null) {
+            return new PartyResult.Error(error == null ? PartyError.DOES_NOT_EXIST : error);
+        } else if (!party.isOwner(owner)) {
+            return new PartyResult.Error(error == null ? PartyError.NOT_OWNER : error);
         }
-        return null;
+
+        return new PartyResult.Success(party);
     }
 
-    @Nullable
-    Party getOrCreateOwnParty(PlayerRef owner) {
-        var party = this.playerToParty.computeIfAbsent(owner, this::createParty);
+    public PartyResult getOrCreateOwnParty(PlayerRef owner) {
+        var party = this.participantToParty.computeIfAbsent(owner, this::createParty);
         if (party.isOwner(owner)) {
-            return party;
+            return new PartyResult.Success(party);
         }
-        return null;
+        return new PartyResult.Error(PartyError.NOT_OWNER);
     }
 
     private Party createParty(PlayerRef owner) {
-        return new Party(this.server, owner);
+        return new Party(this.server, this.participantToParty, owner);
     }
 
     public Collection<ServerPlayerEntity> getPartyMembers(ServerPlayerEntity player, boolean own) {
         var ref = PlayerRef.of(player);
-        var party = own ? this.getOwnParty(ref) : this.getParty(ref);
+        var result = own ? this.getOwnParty(PlayerRef.of(player), null) : this.getParty(ref);
 
-        if (party != null) {
-            return Lists.newArrayList(party.getMemberPlayers());
+        if (result instanceof PartyResult.Success success) {
+            return Lists.newArrayList(success.party().getMemberPlayers());
         } else {
             return Collections.singleton(player);
         }
     }
 
     public Collection<Party> getAllParties() {
-        return new HashSet<>(this.playerToParty.values());
+        return new HashSet<>(this.participantToParty.values());
     }
 }

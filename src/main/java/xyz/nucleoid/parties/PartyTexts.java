@@ -13,17 +13,19 @@ import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 public final class PartyTexts {
     public static MutableText displayError(PartyError error, ServerPlayerEntity player) {
-        return displayError(error, player.getGameProfile().getName());
+        return displayError(error, player.getDisplayName());
     }
 
-    public static MutableText displayError(PartyError error, String player) {
+    public static MutableText displayError(PartyError error, Text player) {
         return switch (error) {
             case DOES_NOT_EXIST -> Text.translatable("text.game_parties.party.error.does_not_exist");
             case ALREADY_INVITED -> Text.translatable("text.game_parties.party.error.already_invited", player);
             case ALREADY_IN_PARTY -> Text.translatable("text.game_parties.party.error.already_in_party");
+            case CANNOT_INVITE_SELF -> Text.translatable("text.game_parties.party.error.cannot_invite_self");
             case CANNOT_REMOVE_SELF -> Text.translatable("text.game_parties.party.error.cannot_remove_self");
             case NOT_IN_PARTY -> Text.translatable("text.game_parties.party.error.not_in_party", player);
             case NOT_INVITED -> Text.translatable("text.game_parties.party.error.not_invited");
+            case NOT_OWNER -> Text.translatable("text.game_parties.party.error.not_owner");
         };
     }
 
@@ -55,8 +57,8 @@ public final class PartyTexts {
         return Text.translatable("text.game_parties.party.transferred.receiver", transferredFrom.getDisplayName());
     }
 
-    public static MutableText kickedSender(ServerPlayerEntity player) {
-        return Text.translatable("text.game_parties.party.kicked.sender", player.getDisplayName());
+    public static MutableText kickedSender(Text playerName) {
+        return Text.translatable("text.game_parties.party.kicked.sender", playerName);
     }
 
     public static MutableText kickedReceiver() {
