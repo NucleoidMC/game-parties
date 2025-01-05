@@ -2,30 +2,55 @@ package xyz.nucleoid.parties.test;
 
 import com.mojang.brigadier.Command;
 import net.minecraft.SharedConstants;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.test.TestContext;
 import org.apache.commons.lang3.mutable.MutableInt;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class CommandAssertion {
     private final TestContext context;
 
-    private final ServerPlayerEntity player;
+    private final TrackingFakePlayerEntity player;
     private final String command;
 
-    private final List<String> expectedFeedback = new ArrayList<>();
+    private final Map<TrackingFakePlayerEntity, List<String>> recipientsToExpectedMessages = new HashMap<>();
 
-    private CommandAssertion(TestContext context, ServerPlayerEntity player, String command) {
+    private CommandAssertion(TestContext context, TrackingFakePlayerEntity player, Set<TrackingFakePlayerEntity> players, String command) {
         this.context = Objects.requireNonNull(context);
         this.player = Objects.requireNonNull(player);
         this.command = Objects.requireNonNull(command);
+
+        if (!players.contains(player)) {
+            throw new IllegalArgumentException("player must be in players set");
+        }
+
+        for (var recipient : players) {
+            this.recipientsToExpectedMessages.put(recipient, new ArrayList<>());
+        }
     }
 
     public CommandAssertion expectFeedback(String feedback) {
-        this.expectedFeedback.add(Objects.requireNonNull(feedback));
+        return this.expectMessage(feedback, this.player);
+    }
+
+    public CommandAssertion expectMessage(String message, TrackingFakePlayerEntity... recipients) {
+        Objects.requireNonNull(message);
+
+        for (var recipient : recipients) {
+            var messages = this.recipientsToExpectedMessages.get(recipient);
+
+            if (messages == null) {
+                throw new IllegalArgumentException("recipient must be in players set");
+            }
+
+            messages.add(message);
+        }
+
         return this;
     }
 
@@ -34,11 +59,9 @@ public class CommandAssertion {
     }
 
     public void execute(int expectedSuccessCount) {
-        var output = new TrackingCommandOutput(this.context);
         var successCount = new MutableInt();
 
         var source = player.getCommandSource()
-                .withOutput(output)
                 .withLevel(4)
                 .withReturnValueConsumer((successful, successCountx) -> {
                     successCount.setValue(successCountx);
@@ -48,12 +71,21 @@ public class CommandAssertion {
             this.player.getServer().getCommandManager().executeWithPrefix(source, this.command);
         });
 
-        output.check(this.command, this.expectedFeedback);
+        for (var entry : this.recipientsToExpectedMessages.entrySet()) {
+            var recipient = entry.getKey();
+
+            var expectedMessages = entry.getValue();
+            var actualMessages = recipient.consumeMessages();
+
+            var name = recipient == this.player ? "feedback" : "messages to " + recipient.getNameForScoreboard();
+            this.context.assertEquals(actualMessages, expectedMessages, "'" + command + "' " + name);
+        }
+
         this.context.assertEquals(successCount.intValue(), expectedSuccessCount, "'" + command + "' success count");
     }
 
-    public static CommandAssertion builder(TestContext context, ServerPlayerEntity player, String command) {
-        return new CommandAssertion(context, player, command);
+    public static CommandAssertion builder(TestContext context, TrackingFakePlayerEntity player, Set<TrackingFakePlayerEntity> players, String command) {
+        return new CommandAssertion(context, player, players, command);
     }
 
     private static void withDevelopment(Runnable runnable) {
