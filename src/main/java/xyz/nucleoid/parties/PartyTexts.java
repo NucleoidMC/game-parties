@@ -2,6 +2,7 @@ package xyz.nucleoid.parties;
 
 import java.util.UUID;
 
+import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
@@ -21,6 +22,7 @@ public final class PartyTexts {
             case DOES_NOT_EXIST -> Text.translatable("text.game_parties.party.error.does_not_exist");
             case ALREADY_INVITED -> Text.translatable("text.game_parties.party.error.already_invited", player);
             case ALREADY_IN_PARTY -> Text.translatable("text.game_parties.party.error.already_in_party");
+            case ALREADY_PARTY_MEMBER-> Text.translatable("text.game_parties.party.error.already_party_member", player);
             case CANNOT_REMOVE_SELF -> Text.translatable("text.game_parties.party.error.cannot_remove_self");
             case NOT_IN_PARTY -> Text.translatable("text.game_parties.party.error.not_in_party", player);
             case NOT_INVITED -> Text.translatable("text.game_parties.party.error.not_invited");
@@ -55,16 +57,23 @@ public final class PartyTexts {
         return Text.translatable("text.game_parties.party.transferred.receiver", transferredFrom.getDisplayName());
     }
 
-    public static MutableText kickedSender(ServerPlayerEntity player) {
-        return Text.translatable("text.game_parties.party.kicked.sender", player.getDisplayName());
+    public static MutableText kickedSender(GameProfile player) {
+        return Text.translatable("text.game_parties.party.kicked.sender", player.getName());
     }
 
     public static MutableText kickedReceiver() {
         return Text.translatable("text.game_parties.party.kicked.receiver");
     }
 
-    public static MutableText invitedSender(ServerPlayerEntity player) {
+    public static MutableText invitedSender(ServerPlayerEntity player, boolean again) {
+        if (again) {
+            return Text.translatable("text.game_parties.party.invited.sender.again", player.getDisplayName());
+        }
         return Text.translatable("text.game_parties.party.invited.sender", player.getDisplayName());
+    }
+
+    public static MutableText invitedSender(int count) {
+        return Text.translatable("text.game_parties.party.invited.sender.multiple", count);
     }
 
     public static MutableText invitedReceiver(ServerPlayerEntity owner, UUID uuid) {

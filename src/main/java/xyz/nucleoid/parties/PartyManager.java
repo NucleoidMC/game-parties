@@ -96,11 +96,16 @@ public final class PartyManager {
 
     public PartyResult invitePlayer(PlayerRef owner, PlayerRef player) {
         var party = this.getOrCreateOwnParty(owner);
+
         if (party != null) {
+            if (party.getMemberPlayers().contains(player)) {
+                return PartyResult.err(PartyError.ALREADY_PARTY_MEMBER);
+            }
+
             if (party.invite(player)) {
                 return PartyResult.ok(party);
             } else {
-                return PartyResult.err(PartyError.ALREADY_INVITED);
+                return PartyResult.err(party, PartyError.ALREADY_INVITED);
             }
         }
 

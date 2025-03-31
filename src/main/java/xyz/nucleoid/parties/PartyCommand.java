@@ -29,7 +29,7 @@ public final class PartyCommand {
                     .executes(PartyCommand::listParties)
                 )
                 .then(literal("invite")
-                    .then(argument("player", EntityArgumentType.player())
+                    .then(argument("players", EntityArgumentType.players())
                     .executes(PartyCommand::invitePlayer)
                 ))
                 .then(literal("kick")
@@ -123,20 +123,33 @@ public final class PartyCommand {
         var source = ctx.getSource();
         var owner = source.getPlayer();
 
-        var player = EntityArgumentType.getPlayer(ctx, "player");
+        var players = EntityArgumentType.getPlayers(ctx, "players");
 
+        int inviteCount = 0;
         var partyManager = PartyManager.get(source.getServer());
-        var result = partyManager.invitePlayer(PlayerRef.of(owner), PlayerRef.of(player));
-        if (result.isOk()) {
-            source.sendFeedback(() -> PartyTexts.invitedSender(player).formatted(Formatting.GOLD), false);
+        for (var player : players) {
+            var result = partyManager.invitePlayer(PlayerRef.of(owner), PlayerRef.of(player));
+            if (result.isOk() | result.error() == PartyError.ALREADY_INVITED) {
+                if (players.size() == 1) {
+                    source.sendFeedback(() -> PartyTexts.invitedSender(player, result.error() == PartyError.ALREADY_INVITED).formatted(Formatting.GOLD), false);
+                } else {
+                    inviteCount++;
+                }
 
-            var notification = PartyTexts.invitedReceiver(owner, result.party().getUuid())
-                    .formatted(Formatting.GOLD);
+                var notification = PartyTexts.invitedReceiver(owner, result.party().getUuid())
+                        .formatted(Formatting.GOLD);
 
-            player.sendMessage(notification, false);
-        } else {
-            var error = result.error();
-            source.sendError(PartyTexts.displayError(error, player));
+                player.sendMessage(notification, false);
+            } else {
+                var error = result.error();
+                if (!(players.size() > 1 && (player == owner | error == PartyError.ALREADY_PARTY_MEMBER))) {
+                        source.sendError(PartyTexts.displayError(error, player));
+                }
+            }
+        }
+        if (inviteCount > 0) {
+            int finalInviteCount = inviteCount;
+            source.sendFeedback(() -> PartyTexts.invitedSender(finalInviteCount).formatted(Formatting.GOLD), false);
         }
 
         return Command.SINGLE_SUCCESS;
@@ -155,7 +168,7 @@ public final class PartyCommand {
             if (result.isOk()) {
                 var party = result.party();
 
-                var message = PartyTexts.kickedSender(owner);
+                var message = PartyTexts.kickedSender(profile);
                 party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
 
                 PlayerRef.of(profile).ifOnline(server, player -> {
