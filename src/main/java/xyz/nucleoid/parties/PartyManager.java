@@ -3,6 +3,7 @@ package xyz.nucleoid.parties;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -178,7 +179,12 @@ public final class PartyManager {
             return PartyResult.err(PartyError.NOT_IN_PARTY);
         }
 
-        party.setOwner(to);
+        if (Permissions.check(to.id(), "party.command.transfer", true).join()) {
+            party.setOwner(to);
+        } else {
+            return PartyResult.err(PartyError.NOT_ALLOWED);
+        }
+
         return PartyResult.ok(party);
     }
 

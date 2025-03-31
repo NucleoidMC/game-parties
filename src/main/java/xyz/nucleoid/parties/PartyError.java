@@ -7,5 +7,6 @@ public enum PartyError {
     ALREADY_PARTY_MEMBER,
     CANNOT_REMOVE_SELF,
     NOT_IN_PARTY,
-    NOT_INVITED
+    NOT_INVITED,
+    NOT_ALLOWED
 }

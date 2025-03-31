@@ -4,6 +4,7 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.GameProfileArgumentType;
 import net.minecraft.command.argument.UuidArgumentType;
@@ -25,18 +26,21 @@ public final class PartyCommand {
         dispatcher.register(
             literal("party")
                 .then(literal("list")
-                    .requires(source -> source.hasPermissionLevel(2))
+                    .requires(Permissions.require("party.command.list", 2))
                     .executes(PartyCommand::listParties)
                 )
                 .then(literal("invite")
+                    .requires(Permissions.require("party.command.invite", 0))
                     .then(argument("players", EntityArgumentType.players())
                     .executes(PartyCommand::invitePlayer)
                 ))
                 .then(literal("kick")
+                    .requires(Permissions.require("party.command.kick", 0))
                     .then(argument("player", GameProfileArgumentType.gameProfile())
                     .executes(PartyCommand::kickPlayer)
                 ))
                 .then(literal("transfer")
+                    .requires(Permissions.require("party.command.transfer", 0))
                     .then(argument("player", EntityArgumentType.player())
                     .executes(PartyCommand::transferToPlayer)
                 ))
@@ -51,7 +55,7 @@ public final class PartyCommand {
                 .then(literal("leave").executes(PartyCommand::leave))
                 .then(literal("disband").executes(PartyCommand::disband))
                 .then(literal("add")
-                    .requires(source -> source.hasPermissionLevel(2))
+                    .requires(Permissions.require("party.command.add", 2))
                     .then(argument("player", EntityArgumentType.player())
                         .then(argument("owner", EntityArgumentType.player())
                             .executes(PartyCommand::addPlayerByOwner)
@@ -62,7 +66,7 @@ public final class PartyCommand {
                     )
                 )
                 .then(literal("remove")
-                    .requires(source -> source.hasPermissionLevel(2))
+                    .requires(Permissions.require("party.command.remove", 2))
                     .then(argument("player", EntityArgumentType.player())
                     .executes(PartyCommand::removePlayer)
                 ))
