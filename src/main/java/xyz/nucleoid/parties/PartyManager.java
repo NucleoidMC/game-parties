@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.plasmid.api.event.GameEvents;
 import xyz.nucleoid.plasmid.api.util.PlayerRef;
@@ -28,6 +29,11 @@ public final class PartyManager {
     }
 
     public static void register() {
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            var partyManager = PartyManager.get(server);
+            partyManager.onPlayerJoin(handler.player);
+        });
+
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             var partyManager = PartyManager.get(server);
             partyManager.onPlayerLogOut(handler.player);
@@ -62,6 +68,21 @@ public final class PartyManager {
             instance = new PartyManager(server);
         }
         return instance;
+    }
+
+    public void onPlayerJoin(ServerPlayerEntity player) {
+        var ref = PlayerRef.of(player);
+
+        for (var party : this.getAllParties()) {
+            if (party.isInvited(ref)) {
+                party.getOwner().ifOnline(this.server, owner -> {
+                    var notification = PartyTexts.invitedReceiver(owner, party.getUuid())
+                            .formatted(Formatting.GOLD);
+
+                    player.sendMessage(notification, false);
+                });
+            }
+        }
     }
 
     public void onPlayerLogOut(ServerPlayerEntity player) {

@@ -27,6 +27,10 @@ public final class Party {
         this.uuid = UUID.randomUUID();
     }
 
+    PlayerRef getOwner() {
+        return this.owner;
+    }
+
     void setOwner(PlayerRef owner) {
         this.owner = owner;
         this.add(owner);
@@ -63,6 +67,10 @@ public final class Party {
 
     public boolean contains(PlayerRef player) {
         return this.memberPlayers.contains(player);
+    }
+
+    public boolean isInvited(PlayerRef player) {
+        return this.pendingMembers.contains(player);
     }
 
     public boolean isOwner(PlayerRef from) {
