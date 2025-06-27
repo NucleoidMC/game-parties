@@ -8,6 +8,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.plasmid.api.event.GameEvents;
+import xyz.nucleoid.plasmid.api.game.GameSpaceManager;
 import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 import java.util.Collection;
@@ -35,10 +36,15 @@ public final class PartyManager {
 
         GameEvents.COLLECT_PLAYERS_FOR_JOIN.register((gameSpace, player, additional) -> {
             var partyManager = PartyManager.get(player.server);
+            var gameSpaceManager = GameSpaceManager.get();
 
             var members = partyManager.getPartyMembers(player, true);
-            
-            additional.addAll(members);
+
+            for (var member : members) {
+                if (!gameSpaceManager.inGame(member)) {
+                    additional.add(member);
+                }
+            }
         });
 
         GameEvents.TEAM_SELECTION_LOBBY_FINALIZE.register((gameSpace, allocator, players) -> {
