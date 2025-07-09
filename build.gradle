@@ -24,6 +24,7 @@ dependencies {
 
 	modImplementation 'xyz.nucleoid:plasmid:0.6.3-SNAPSHOT+1.21.4'
 	modImplementation include('xyz.nucleoid:more-codecs:0.3.5+1.21.2')
+	modImplementation include("me.lucko:fabric-permissions-api:${project.permission_api_version}")
 }
 
 processResources {
