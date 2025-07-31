@@ -19,6 +19,10 @@ public final class PartyResult {
         return new PartyResult(null, error);
     }
 
+    public static PartyResult err(Party party, PartyError error) {
+        return new PartyResult(party, error);
+    }
+
     public boolean isOk() {
         return this.error == null;
     }

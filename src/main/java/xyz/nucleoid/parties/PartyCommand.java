@@ -4,6 +4,7 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.GameProfileArgumentType;
 import net.minecraft.command.argument.UuidArgumentType;
@@ -25,18 +26,21 @@ public final class PartyCommand {
         dispatcher.register(
             literal("party")
                 .then(literal("list")
-                    .requires(source -> source.hasPermissionLevel(2))
+                    .requires(Permissions.require("party.command.list", 2))
                     .executes(PartyCommand::listParties)
                 )
                 .then(literal("invite")
-                    .then(argument("player", EntityArgumentType.player())
+                    .requires(Permissions.require("party.command.invite", 0))
+                    .then(argument("players", EntityArgumentType.players())
                     .executes(PartyCommand::invitePlayer)
                 ))
                 .then(literal("kick")
+                    .requires(Permissions.require("party.command.kick", 0))
                     .then(argument("player", GameProfileArgumentType.gameProfile())
                     .executes(PartyCommand::kickPlayer)
                 ))
                 .then(literal("transfer")
+                    .requires(Permissions.require("party.command.transfer", 0))
                     .then(argument("player", EntityArgumentType.player())
                     .executes(PartyCommand::transferToPlayer)
                 ))
@@ -51,7 +55,7 @@ public final class PartyCommand {
                 .then(literal("leave").executes(PartyCommand::leave))
                 .then(literal("disband").executes(PartyCommand::disband))
                 .then(literal("add")
-                    .requires(source -> source.hasPermissionLevel(2))
+                    .requires(Permissions.require("party.command.add", 2))
                     .then(argument("player", EntityArgumentType.player())
                         .then(argument("owner", EntityArgumentType.player())
                             .executes(PartyCommand::addPlayerByOwner)
@@ -62,7 +66,7 @@ public final class PartyCommand {
                     )
                 )
                 .then(literal("remove")
-                    .requires(source -> source.hasPermissionLevel(2))
+                    .requires(Permissions.require("party.command.remove", 2))
                     .then(argument("player", EntityArgumentType.player())
                     .executes(PartyCommand::removePlayer)
                 ))
@@ -123,20 +127,33 @@ public final class PartyCommand {
         var source = ctx.getSource();
         var owner = source.getPlayer();
 
-        var player = EntityArgumentType.getPlayer(ctx, "player");
+        var players = EntityArgumentType.getPlayers(ctx, "players");
 
+        int inviteCount = 0;
         var partyManager = PartyManager.get(source.getServer());
-        var result = partyManager.invitePlayer(PlayerRef.of(owner), PlayerRef.of(player));
-        if (result.isOk()) {
-            source.sendFeedback(() -> PartyTexts.invitedSender(player).formatted(Formatting.GOLD), false);
+        for (var player : players) {
+            var result = partyManager.invitePlayer(PlayerRef.of(owner), PlayerRef.of(player));
+            if (result.isOk() | result.error() == PartyError.ALREADY_INVITED) {
+                if (players.size() == 1) {
+                    source.sendFeedback(() -> PartyTexts.invitedSender(player, result.error() == PartyError.ALREADY_INVITED).formatted(Formatting.GOLD), false);
+                } else {
+                    inviteCount++;
+                }
 
-            var notification = PartyTexts.invitedReceiver(owner, result.party().getUuid())
-                    .formatted(Formatting.GOLD);
+                var notification = PartyTexts.invitedReceiver(owner, result.party().getUuid())
+                        .formatted(Formatting.GOLD);
 
-            player.sendMessage(notification, false);
-        } else {
-            var error = result.error();
-            source.sendError(PartyTexts.displayError(error, player));
+                player.sendMessage(notification, false);
+            } else {
+                var error = result.error();
+                if (!(players.size() > 1 && (player == owner | error == PartyError.ALREADY_PARTY_MEMBER))) {
+                        source.sendError(PartyTexts.displayError(error, player));
+                }
+            }
+        }
+        if (inviteCount > 0) {
+            int finalInviteCount = inviteCount;
+            source.sendFeedback(() -> PartyTexts.invitedSender(finalInviteCount).formatted(Formatting.GOLD), false);
         }
 
         return Command.SINGLE_SUCCESS;
@@ -155,7 +172,7 @@ public final class PartyCommand {
             if (result.isOk()) {
                 var party = result.party();
 
-                var message = PartyTexts.kickedSender(owner);
+                var message = PartyTexts.kickedSender(profile);
                 party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
 
                 PlayerRef.of(profile).ifOnline(server, player -> {
