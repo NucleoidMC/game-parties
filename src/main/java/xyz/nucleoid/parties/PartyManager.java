@@ -5,8 +5,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Formatting;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.ChatFormatting;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.plasmid.api.event.GameEvents;
 import xyz.nucleoid.plasmid.api.game.GameSpaceManager;
@@ -57,7 +57,7 @@ public final class PartyManager {
 
             var ungroupedPlayers = players.stream().collect(Collectors.toCollection(HashSet::new));
 
-            for (ServerPlayerEntity player : players) {
+            for (ServerPlayer player : players) {
                 if (ungroupedPlayers.contains(player)) {
                     var members = partyManager.getPartyMembers(player, false);
 
@@ -75,22 +75,22 @@ public final class PartyManager {
         return instance;
     }
 
-    public void onPlayerJoin(ServerPlayerEntity player) {
+    public void onPlayerJoin(ServerPlayer player) {
         var ref = PlayerRef.of(player);
 
         for (var party : this.getAllParties()) {
             if (party.isInvited(ref)) {
                 party.getOwner().ifOnline(this.server, owner -> {
                     var notification = PartyTexts.invitedReceiver(owner, party.getUuid())
-                            .formatted(Formatting.GOLD);
+                            .withStyle(ChatFormatting.GOLD);
 
-                    player.sendMessage(notification, false);
+                    player.displayClientMessage(notification, false);
                 });
             }
         }
     }
 
-    public void onPlayerLogOut(ServerPlayerEntity player) {
+    public void onPlayerLogOut(ServerPlayer player) {
         var ref = PlayerRef.of(player);
 
         var party = this.playerToParty.remove(ref);
@@ -107,14 +107,14 @@ public final class PartyManager {
         }
     }
 
-    private void onPartyOwnerLogOut(ServerPlayerEntity player, Party party) {
+    private void onPartyOwnerLogOut(ServerPlayer player, Party party) {
         var members = party.getMembers();
 
         if (!members.isEmpty()) {
             var nextMember = members.getFirst();
             party.setOwner(nextMember);
 
-            nextMember.ifOnline(this.server, nextPlayer -> nextPlayer.sendMessage(PartyTexts.transferredReceiver(player), false));
+            nextMember.ifOnline(this.server, nextPlayer -> nextPlayer.displayClientMessage(PartyTexts.transferredReceiver(player), false));
         }
     }
 
@@ -294,7 +294,7 @@ public final class PartyManager {
         return new Party(this.server, owner);
     }
 
-    public Collection<ServerPlayerEntity> getPartyMembers(ServerPlayerEntity player, boolean own) {
+    public Collection<ServerPlayer> getPartyMembers(ServerPlayer player, boolean own) {
         var ref = PlayerRef.of(player);
         var party = own ? this.getOwnParty(ref) : this.getParty(ref);
 

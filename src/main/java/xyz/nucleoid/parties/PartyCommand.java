@@ -4,74 +4,74 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.command.argument.GameProfileArgumentType;
-import net.minecraft.command.argument.UuidArgumentType;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.GameProfileArgument;
+import net.minecraft.commands.arguments.UuidArgument;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 
-import static net.minecraft.command.DefaultPermissions.GAMEMASTERS;
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
 
 public final class PartyCommand {
     // @formatter:off
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             literal("party")
                 .then(literal("list")
-                    .requires(source -> source.getPermissions().hasPermission(GAMEMASTERS))
+                    .requires(source -> source.permissions().hasPermission(COMMANDS_GAMEMASTER))
                     .executes(PartyCommand::listParties)
                 )
                 .then(literal("invite")
-                    .then(argument("player", EntityArgumentType.player())
+                    .then(argument("player", EntityArgument.player())
                     .executes(PartyCommand::invitePlayer)
                 ))
                 .then(literal("kick")
-                    .then(argument("player", GameProfileArgumentType.gameProfile())
+                    .then(argument("player", GameProfileArgument.gameProfile())
                     .executes(PartyCommand::kickPlayer)
                 ))
                 .then(literal("transfer")
-                    .then(argument("player", EntityArgumentType.player())
+                    .then(argument("player", EntityArgument.player())
                     .executes(PartyCommand::transferToPlayer)
                 ))
                 .then(literal("accept")
-                    .then(argument("owner", EntityArgumentType.player())
+                    .then(argument("owner", EntityArgument.player())
                         .executes(PartyCommand::acceptInviteByOwner)
                     )
-                    .then(argument("party", UuidArgumentType.uuid())
+                    .then(argument("party", UuidArgument.uuid())
                         .executes(PartyCommand::acceptInviteByUuid)
                     )
                 )
                 .then(literal("leave").executes(PartyCommand::leave))
                 .then(literal("disband").executes(PartyCommand::disband))
                 .then(literal("add")
-                    .requires(source -> source.getPermissions().hasPermission(GAMEMASTERS))
-                    .then(argument("player", EntityArgumentType.player())
-                        .then(argument("owner", EntityArgumentType.player())
+                    .requires(source -> source.permissions().hasPermission(COMMANDS_GAMEMASTER))
+                    .then(argument("player", EntityArgument.player())
+                        .then(argument("owner", EntityArgument.player())
                             .executes(PartyCommand::addPlayerByOwner)
                         )
-                        .then(argument("party", UuidArgumentType.uuid())
+                        .then(argument("party", UuidArgument.uuid())
                             .executes(PartyCommand::addPlayerByUuid)
                         )
                     )
                 )
                 .then(literal("remove")
-                    .requires(source -> source.getPermissions().hasPermission(GAMEMASTERS))
-                    .then(argument("player", EntityArgumentType.player())
+                    .requires(source -> source.permissions().hasPermission(COMMANDS_GAMEMASTER))
+                    .then(argument("player", EntityArgument.player())
                     .executes(PartyCommand::removePlayer)
                 ))
         );
     }
     // @formatter:on
 
-    private static int listParties(CommandContext<ServerCommandSource> ctx) {
+    private static int listParties(CommandContext<CommandSourceStack> ctx) {
         var source = ctx.getSource();
         var server = source.getServer();
 
@@ -79,21 +79,21 @@ public final class PartyCommand {
         var parties = new ArrayList<>(partyManager.getAllParties());
 
         if (parties.isEmpty()) {
-            source.sendError(PartyTexts.noParties());
+            source.sendFailure(PartyTexts.noParties());
             return 0;
         }
 
         parties.sort(Comparator.comparing(Party::getUuid));
 
-        source.sendFeedback(() -> {
-            var text = Text.empty();
+        source.sendSuccess(() -> {
+            var text = Component.empty();
             boolean first = true;
 
             for (var party : parties) {
                 if (first) {
                     first = false;
                 } else {
-                    text.append(ScreenTexts.LINE_BREAK);
+                    text.append(CommonComponents.NEW_LINE);
                 }
 
                 text.append(PartyTexts.listEntry(party.getUuid()));
@@ -102,14 +102,14 @@ public final class PartyCommand {
                 members.sort(Comparator.comparing(PlayerRef::id));
 
                 for (var member : members) {
-                    text.append(ScreenTexts.LINE_BREAK);
+                    text.append(CommonComponents.NEW_LINE);
 
                     if (party.isOwner(member)) {
-                        text.append(PartyTexts.listMemberEntryType(member, server, PartyTexts.listMemberTypeOwner().formatted(Formatting.LIGHT_PURPLE)));
+                        text.append(PartyTexts.listMemberEntryType(member, server, PartyTexts.listMemberTypeOwner().withStyle(ChatFormatting.LIGHT_PURPLE)));
                     } else if (party.contains(member)) {
                         text.append(PartyTexts.listMemberEntry(member, server));
                     } else {
-                        text.append(PartyTexts.listMemberEntryType(member, server, PartyTexts.listMemberTypePending().formatted(Formatting.GRAY)));
+                        text.append(PartyTexts.listMemberEntryType(member, server, PartyTexts.listMemberTypePending().withStyle(ChatFormatting.GRAY)));
                     }
                 }
             }
@@ -120,38 +120,38 @@ public final class PartyCommand {
         return parties.size();
     }
 
-    private static int invitePlayer(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    private static int invitePlayer(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();
         var owner = source.getPlayer();
 
-        var player = EntityArgumentType.getPlayer(ctx, "player");
+        var player = EntityArgument.getPlayer(ctx, "player");
 
         var partyManager = PartyManager.get(source.getServer());
         var result = partyManager.invitePlayer(PlayerRef.of(owner), PlayerRef.of(player));
         if (result.isOk()) {
-            source.sendFeedback(() -> PartyTexts.invitedSender(player).formatted(Formatting.GOLD), false);
+            source.sendSuccess(() -> PartyTexts.invitedSender(player).withStyle(ChatFormatting.GOLD), false);
 
             var notification = PartyTexts.invitedReceiver(owner, result.party().getUuid())
-                    .formatted(Formatting.GOLD);
+                    .withStyle(ChatFormatting.GOLD);
 
-            player.sendMessage(notification, false);
+            player.displayClientMessage(notification, false);
         } else {
             var error = result.error();
-            source.sendError(PartyTexts.displayError(error, player));
+            source.sendFailure(PartyTexts.displayError(error, player));
         }
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int kickPlayer(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    private static int kickPlayer(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();
         var server = source.getServer();
         var owner = source.getPlayer();
 
-        var profiles = GameProfileArgumentType.getProfileArgument(ctx, "player");
+        var profiles = GameProfileArgument.getGameProfiles(ctx, "player");
 
         for (var profile : profiles) {
-            var targetPlayer = server.getPlayerManager().getPlayer(profile.id());
+            var targetPlayer = server.getPlayerList().getPlayer(profile.id());
 
             var partyManager = PartyManager.get(source.getServer());
             var result = partyManager.kickPlayer(PlayerRef.of(owner), PlayerRef.of(targetPlayer));
@@ -159,60 +159,60 @@ public final class PartyCommand {
                 var party = result.party();
 
                 var message = PartyTexts.kickedSender(owner);
-                party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
+                party.getMemberPlayers().sendMessage(message.withStyle(ChatFormatting.GOLD));
 
                 PlayerRef.of(targetPlayer).ifOnline(server, player -> {
-                    player.sendMessage(PartyTexts.kickedReceiver().formatted(Formatting.RED), false);
+                    player.displayClientMessage(PartyTexts.kickedReceiver().withStyle(ChatFormatting.RED), false);
                 });
             } else {
                 var error = result.error();
-                source.sendError(PartyTexts.displayError(error, profile.name()));
+                source.sendFailure(PartyTexts.displayError(error, profile.name()));
             }
         }
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int transferToPlayer(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    private static int transferToPlayer(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();
         var oldOwner = source.getPlayer();
-        var newOwner = EntityArgumentType.getPlayer(ctx, "player");
+        var newOwner = EntityArgument.getPlayer(ctx, "player");
 
         var partyManager = PartyManager.get(source.getServer());
         var result = partyManager.transferParty(PlayerRef.of(oldOwner), PlayerRef.of(newOwner));
         if (result.isOk()) {
-            source.sendFeedback(
-                    () -> PartyTexts.transferredSender(newOwner).formatted(Formatting.GOLD),
+            source.sendSuccess(
+                    () -> PartyTexts.transferredSender(newOwner).withStyle(ChatFormatting.GOLD),
                     false
             );
 
-            newOwner.sendMessage(
-                    PartyTexts.transferredReceiver(oldOwner).formatted(Formatting.GOLD),
+            newOwner.displayClientMessage(
+                    PartyTexts.transferredReceiver(oldOwner).withStyle(ChatFormatting.GOLD),
                     false
             );
         } else {
             var error = result.error();
-            source.sendError(PartyTexts.displayError(error, newOwner));
+            source.sendFailure(PartyTexts.displayError(error, newOwner));
         }
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int acceptInviteByOwner(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
-        var owner = EntityArgumentType.getPlayer(ctx, "owner");
+    private static int acceptInviteByOwner(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        var owner = EntityArgument.getPlayer(ctx, "owner");
         var partyManager = PartyManager.get(ctx.getSource().getServer());
 
         return acceptInvite(ctx, partyManager.getOwnParty(PlayerRef.of(owner)));
     }
 
-    private static int acceptInviteByUuid(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
-        var uuid = UuidArgumentType.getUuid(ctx, "party");
+    private static int acceptInviteByUuid(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        var uuid = UuidArgument.getUuid(ctx, "party");
         var partyManager = PartyManager.get(ctx.getSource().getServer());
 
         return acceptInvite(ctx, partyManager.getParty(uuid));
     }
 
-    private static int acceptInvite(CommandContext<ServerCommandSource> ctx, Party party) throws CommandSyntaxException {
+    private static int acceptInvite(CommandContext<CommandSourceStack> ctx, Party party) throws CommandSyntaxException {
         var source = ctx.getSource();
         var player = source.getPlayer();
 
@@ -220,16 +220,16 @@ public final class PartyCommand {
         var result = partyManager.acceptInvite(PlayerRef.of(player), party);
         if (result.isOk()) {
             var message = PartyTexts.joinSuccess(player);
-            party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
+            party.getMemberPlayers().sendMessage(message.withStyle(ChatFormatting.GOLD));
         } else {
             var error = result.error();
-            source.sendError(PartyTexts.displayError(error, player));
+            source.sendFailure(PartyTexts.displayError(error, player));
         }
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int leave(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    private static int leave(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();
         var player = source.getPlayer();
 
@@ -239,16 +239,16 @@ public final class PartyCommand {
             var party = result.party();
 
             var message = PartyTexts.leaveSuccess(player);
-            party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
+            party.getMemberPlayers().sendMessage(message.withStyle(ChatFormatting.GOLD));
         } else {
             var error = result.error();
-            source.sendError(PartyTexts.displayError(error, player));
+            source.sendFailure(PartyTexts.displayError(error, player));
         }
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int disband(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    private static int disband(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();
         var owner = source.getPlayer();
 
@@ -258,58 +258,58 @@ public final class PartyCommand {
             var party = result.party();
 
             var message = PartyTexts.disbandSuccess();
-            party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
+            party.getMemberPlayers().sendMessage(message.withStyle(ChatFormatting.GOLD));
         } else {
             var error = result.error();
-            source.sendError(PartyTexts.displayError(error, owner));
+            source.sendFailure(PartyTexts.displayError(error, owner));
         }
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int addPlayerByOwner(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
-        var owner = EntityArgumentType.getPlayer(ctx, "owner");
+    private static int addPlayerByOwner(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        var owner = EntityArgument.getPlayer(ctx, "owner");
         var partyManager = PartyManager.get(ctx.getSource().getServer());
 
         return addPlayer(ctx, partyManager.getOrCreateOwnParty(PlayerRef.of(owner)));
     }
 
-    private static int addPlayerByUuid(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
-        var uuid = UuidArgumentType.getUuid(ctx, "party");
+    private static int addPlayerByUuid(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        var uuid = UuidArgument.getUuid(ctx, "party");
         var partyManager = PartyManager.get(ctx.getSource().getServer());
 
         return addPlayer(ctx, partyManager.getParty(uuid));
     }
 
-    private static int addPlayer(CommandContext<ServerCommandSource> ctx, Party party) throws CommandSyntaxException {
+    private static int addPlayer(CommandContext<CommandSourceStack> ctx, Party party) throws CommandSyntaxException {
         var source = ctx.getSource();
-        var player = EntityArgumentType.getPlayer(ctx, "player");
+        var player = EntityArgument.getPlayer(ctx, "player");
 
         var partyManager = PartyManager.get(source.getServer());
         var result = partyManager.addPlayer(PlayerRef.of(player), party);
         if (result.isOk()) {
             var message = PartyTexts.addSuccess(player);
-            party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
+            party.getMemberPlayers().sendMessage(message.withStyle(ChatFormatting.GOLD));
         } else {
             var error = result.error();
-            source.sendError(PartyTexts.displayError(error, player));
+            source.sendFailure(PartyTexts.displayError(error, player));
         }
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int removePlayer(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    private static int removePlayer(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();
-        var player = EntityArgumentType.getPlayer(ctx, "player");
+        var player = EntityArgument.getPlayer(ctx, "player");
 
         var partyManager = PartyManager.get(source.getServer());
         var result = partyManager.removePlayer(PlayerRef.of(player));
         if (result.isOk()) {
             var message = PartyTexts.removeSuccess(player);
-            result.party().getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
+            result.party().getMemberPlayers().sendMessage(message.withStyle(ChatFormatting.GOLD));
         } else {
             var error = result.error();
-            source.sendError(PartyTexts.displayError(error, player));
+            source.sendFailure(PartyTexts.displayError(error, player));
         }
 
         return Command.SINGLE_SUCCESS;
