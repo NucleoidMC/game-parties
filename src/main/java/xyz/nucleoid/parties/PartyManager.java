@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.UUID;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public final class PartyManager {
@@ -41,7 +40,7 @@ public final class PartyManager {
         });
 
         GameEvents.COLLECT_PLAYERS_FOR_JOIN.register((gameSpace, player, additional) -> {
-            var partyManager = PartyManager.get(player.server);
+            var partyManager = PartyManager.get(gameSpace.getServer());
             var gameSpaceManager = GameSpaceManager.get();
 
             var members = partyManager.getPartyMembers(player, true);
@@ -112,12 +111,10 @@ public final class PartyManager {
         var members = party.getMembers();
 
         if (!members.isEmpty()) {
-            var nextMember = members.get(0);
+            var nextMember = members.getFirst();
             party.setOwner(nextMember);
 
-            nextMember.ifOnline(this.server, nextPlayer -> {
-                nextPlayer.sendMessage(PartyTexts.transferredReceiver(player), false);
-            });
+            nextMember.ifOnline(this.server, nextPlayer -> nextPlayer.sendMessage(PartyTexts.transferredReceiver(player), false));
         }
     }
 

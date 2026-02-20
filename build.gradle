@@ -1,14 +1,14 @@
 plugins {
-	id 'fabric-loom' version '1.8.+'
+	id 'fabric-loom' version '1.15-SNAPSHOT'
 	id 'maven-publish'
 }
 
-sourceCompatibility = JavaVersion.VERSION_21
-targetCompatibility = JavaVersion.VERSION_21
-
-archivesBaseName = project.archives_base_name
 version = project.mod_version
 group = project.maven_group
+
+base {
+  archivesName = project.archives_base_name
+}
 
 repositories {
 	maven { url = "https://maven.nucleoid.xyz/" }
@@ -22,29 +22,33 @@ dependencies {
 
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	modImplementation 'xyz.nucleoid:plasmid:0.6.3-SNAPSHOT+1.21.4'
+	modImplementation 'xyz.nucleoid:plasmid:0.6.7-SNAPSHOT+1.21.11'
 	modImplementation include('xyz.nucleoid:more-codecs:0.3.5+1.21.2')
 }
 
 processResources {
-	inputs.property "version", project.version
+  inputs.property "version", project.version
 
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
-	}
+  filesMatching("fabric.mod.json") {
+    expand "version": inputs.properties.version
+  }
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.encoding = "UTF-8"
-	it.options.release = 16
+  it.options.release = 21
 }
 
 java {
-	withSourcesJar()
+  withSourcesJar()
+
+  sourceCompatibility = JavaVersion.VERSION_21
+  targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {
-	from("LICENSE") {
-		rename { "${it}_${project.archivesBaseName}"}
-	}
+  inputs.property "archivesName", project.base.archivesName
+
+  from("LICENSE") {
+    rename { "${it}_${inputs.properties.archivesName}"}
+  }
 }

@@ -13,7 +13,7 @@ import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 public final class PartyTexts {
     public static MutableText displayError(PartyError error, ServerPlayerEntity player) {
-        return displayError(error, player.getGameProfile().getName());
+        return displayError(error, player.getGameProfile().name());
     }
 
     public static MutableText displayError(PartyError error, String player) {

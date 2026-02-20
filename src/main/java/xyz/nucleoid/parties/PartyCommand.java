@@ -16,6 +16,7 @@ import xyz.nucleoid.plasmid.api.util.PlayerRef;
 import java.util.ArrayList;
 import java.util.Comparator;
 
+import static net.minecraft.command.DefaultPermissions.GAMEMASTERS;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
@@ -25,7 +26,7 @@ public final class PartyCommand {
         dispatcher.register(
             literal("party")
                 .then(literal("list")
-                    .requires(source -> source.hasPermissionLevel(2))
+                    .requires(source -> source.getPermissions().hasPermission(GAMEMASTERS))
                     .executes(PartyCommand::listParties)
                 )
                 .then(literal("invite")
@@ -51,7 +52,7 @@ public final class PartyCommand {
                 .then(literal("leave").executes(PartyCommand::leave))
                 .then(literal("disband").executes(PartyCommand::disband))
                 .then(literal("add")
-                    .requires(source -> source.hasPermissionLevel(2))
+                    .requires(source -> source.getPermissions().hasPermission(GAMEMASTERS))
                     .then(argument("player", EntityArgumentType.player())
                         .then(argument("owner", EntityArgumentType.player())
                             .executes(PartyCommand::addPlayerByOwner)
@@ -62,7 +63,7 @@ public final class PartyCommand {
                     )
                 )
                 .then(literal("remove")
-                    .requires(source -> source.hasPermissionLevel(2))
+                    .requires(source -> source.getPermissions().hasPermission(GAMEMASTERS))
                     .then(argument("player", EntityArgumentType.player())
                     .executes(PartyCommand::removePlayer)
                 ))
@@ -70,7 +71,7 @@ public final class PartyCommand {
     }
     // @formatter:on
 
-    private static int listParties(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    private static int listParties(CommandContext<ServerCommandSource> ctx) {
         var source = ctx.getSource();
         var server = source.getServer();
 
@@ -150,20 +151,22 @@ public final class PartyCommand {
         var profiles = GameProfileArgumentType.getProfileArgument(ctx, "player");
 
         for (var profile : profiles) {
+            var targetPlayer = server.getPlayerManager().getPlayer(profile.id());
+
             var partyManager = PartyManager.get(source.getServer());
-            var result = partyManager.kickPlayer(PlayerRef.of(owner), PlayerRef.of(profile));
+            var result = partyManager.kickPlayer(PlayerRef.of(owner), PlayerRef.of(targetPlayer));
             if (result.isOk()) {
                 var party = result.party();
 
                 var message = PartyTexts.kickedSender(owner);
                 party.getMemberPlayers().sendMessage(message.formatted(Formatting.GOLD));
 
-                PlayerRef.of(profile).ifOnline(server, player -> {
+                PlayerRef.of(targetPlayer).ifOnline(server, player -> {
                     player.sendMessage(PartyTexts.kickedReceiver().formatted(Formatting.RED), false);
                 });
             } else {
                 var error = result.error();
-                source.sendError(PartyTexts.displayError(error, profile.getName()));
+                source.sendError(PartyTexts.displayError(error, profile.name()));
             }
         }
 
