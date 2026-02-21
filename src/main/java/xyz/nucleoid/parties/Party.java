@@ -15,7 +15,7 @@ public final class Party {
 
     private final List<PlayerRef> members = new ObjectArrayList<>();
     private final Set<PlayerRef> pendingMembers = new ObjectOpenHashSet<>();
-
+    private boolean isPrivate = false;
     private final MutablePlayerSet memberPlayers;
 
     private final UUID uuid;
@@ -34,6 +34,10 @@ public final class Party {
     void setOwner(PlayerRef owner) {
         this.owner = owner;
         this.add(owner);
+    }
+
+    public void setPrivate(boolean value) {
+        isPrivate = value;
     }
 
     boolean invite(PlayerRef player) {
@@ -76,6 +80,8 @@ public final class Party {
     public boolean isOwner(PlayerRef from) {
         return from.equals(this.owner);
     }
+
+    public boolean isPrivate() { return isPrivate; }
 
     public List<PlayerRef> getMembers() {
         return this.members;
