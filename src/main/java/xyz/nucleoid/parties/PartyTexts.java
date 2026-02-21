@@ -47,6 +47,9 @@ public final class PartyTexts {
         return Component.translatable("text.game_parties.party.remove.success", player.getDisplayName());
     }
 
+    public static MutableComponent privatedSuccess(boolean isPrivate) {
+        return Component.translatable("text.game_parties.party.private.success", isPrivate ? "on" : "off");
+    }
     public static MutableComponent transferredSender(ServerPlayer transferredTo) {
         return Component.translatable("text.game_parties.party.transferred.sender", transferredTo.getDisplayName());
     }

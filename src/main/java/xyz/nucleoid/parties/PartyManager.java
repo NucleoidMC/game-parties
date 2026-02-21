@@ -41,12 +41,19 @@ public final class PartyManager {
 
         GameEvents.COLLECT_PLAYERS_FOR_JOIN.register((gameSpace, player, additional) -> {
             var partyManager = PartyManager.get(gameSpace.getServer());
+            Party party = partyManager.getOwnParty(PlayerRef.of(player));
             var gameSpaceManager = GameSpaceManager.get();
 
             var members = partyManager.getPartyMembers(player, true);
-
+            boolean isPrivate = false;
+            if (party != null) {
+                isPrivate = party.isPrivate();
+            }
             for (var member : members) {
                 if (!gameSpaceManager.inGame(member)) {
+                    if (isPrivate) {
+                        gameSpace.addPlayerToWhitelist(PlayerRef.of(member));
+                    }
                     additional.add(member);
                 }
             }

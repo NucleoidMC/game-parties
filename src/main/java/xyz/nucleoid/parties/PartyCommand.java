@@ -11,6 +11,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
+import net.minecraft.server.level.ServerPlayer;
 import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ public final class PartyCommand {
                         .executes(PartyCommand::acceptInviteByUuid)
                     )
                 )
+                .then(literal("private").executes(PartyCommand::makePartyPrivate))
                 .then(literal("leave").executes(PartyCommand::leave))
                 .then(literal("disband").executes(PartyCommand::disband))
                 .then(literal("add")
@@ -312,6 +314,22 @@ public final class PartyCommand {
             source.sendFailure(PartyTexts.displayError(error, player));
         }
 
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int makePartyPrivate(CommandContext<CommandSourceStack> ctx) {
+        var source = ctx.getSource();
+        ServerPlayer player = source.getPlayer();
+        if (player != null) {
+            PartyManager partyManager = PartyManager.get(source.getServer());
+            Party party = partyManager.getOwnParty(PlayerRef.of(player));
+            if (party != null) {
+                party.setPrivate(!party.isPrivate());
+                source.sendSuccess(() -> PartyTexts.privatedSuccess(party.isPrivate()).withStyle(ChatFormatting.GOLD), true);
+            } else {
+                source.sendFailure(PartyTexts.displayError(PartyError.DOES_NOT_EXIST, player));
+            }
+        }
         return Command.SINGLE_SUCCESS;
     }
 }
