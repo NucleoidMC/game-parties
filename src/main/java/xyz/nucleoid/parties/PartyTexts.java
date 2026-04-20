@@ -8,8 +8,8 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.ChatFormatting;
-import xyz.nucleoid.plasmid.api.game.GameTexts;
 import xyz.nucleoid.plasmid.api.util.PlayerRef;
+import xyz.nucleoid.plasmid.api.game.GameComponents;
 
 public final class PartyTexts {
     public static MutableComponent displayError(PartyError error, ServerPlayer player) {
@@ -74,7 +74,7 @@ public final class PartyTexts {
 
     public static MutableComponent inviteNotificationLink(ServerPlayer owner, UUID uuid) {
         return Component.translatable("text.game_parties.party.invited.receiver.click")
-                .setStyle(GameTexts.commandLinkStyle(
+                .setStyle(GameComponents.commandLinkStyle(
                         "/party accept " + uuid,
                         Component.translatable("text.game_parties.party.invited.receiver.hover", owner.getDisplayName())
                 ));
