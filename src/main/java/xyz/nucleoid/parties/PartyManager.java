@@ -84,7 +84,7 @@ public final class PartyManager {
                     var notification = PartyTexts.invitedReceiver(owner, party.getUuid())
                             .withStyle(ChatFormatting.GOLD);
 
-                    player.displayClientMessage(notification, false);
+                    player.sendSystemMessage(notification, false);
                 });
             }
         }
@@ -114,7 +114,7 @@ public final class PartyManager {
             var nextMember = members.getFirst();
             party.setOwner(nextMember);
 
-            nextMember.ifOnline(this.server, nextPlayer -> nextPlayer.displayClientMessage(PartyTexts.transferredReceiver(player), false));
+            nextMember.ifOnline(this.server, nextPlayer -> nextPlayer.sendSystemMessage(PartyTexts.transferredReceiver(player), false));
         }
     }
 

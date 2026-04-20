@@ -134,7 +134,7 @@ public final class PartyCommand {
             var notification = PartyTexts.invitedReceiver(owner, result.party().getUuid())
                     .withStyle(ChatFormatting.GOLD);
 
-            player.displayClientMessage(notification, false);
+            player.sendSystemMessage(notification, false);
         } else {
             var error = result.error();
             source.sendFailure(PartyTexts.displayError(error, player));
@@ -162,7 +162,7 @@ public final class PartyCommand {
                 party.getMemberPlayers().sendMessage(message.withStyle(ChatFormatting.GOLD));
 
                 PlayerRef.of(targetPlayer).ifOnline(server, player -> {
-                    player.displayClientMessage(PartyTexts.kickedReceiver().withStyle(ChatFormatting.RED), false);
+                    player.sendSystemMessage(PartyTexts.kickedReceiver().withStyle(ChatFormatting.RED), false);
                 });
             } else {
                 var error = result.error();
@@ -186,7 +186,7 @@ public final class PartyCommand {
                     false
             );
 
-            newOwner.displayClientMessage(
+            newOwner.sendSystemMessage(
                     PartyTexts.transferredReceiver(oldOwner).withStyle(ChatFormatting.GOLD),
                     false
             );

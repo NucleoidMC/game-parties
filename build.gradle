@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.15-SNAPSHOT'
+	id 'net.fabricmc.fabric-loom' version '1.15-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -17,13 +17,12 @@ repositories {
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-  mappings loom.officialMojangMappings()
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	modImplementation 'xyz.nucleoid:plasmid:0.6.7-SNAPSHOT+1.21.11'
-	modImplementation include('xyz.nucleoid:more-codecs:0.3.5+1.21.2')
+	implementation "xyz.nucleoid:plasmid:${project.plasmid_version}"
+	implementation include("xyz.nucleoid:more-codecs:${project.more_codecs_version}")
 }
 
 processResources {
@@ -35,14 +34,14 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-  it.options.release = 21
+  it.options.release = 25
 }
 
 java {
   withSourcesJar()
 
-  sourceCompatibility = JavaVersion.VERSION_21
-  targetCompatibility = JavaVersion.VERSION_21
+  sourceCompatibility = JavaVersion.VERSION_25
+  targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {
