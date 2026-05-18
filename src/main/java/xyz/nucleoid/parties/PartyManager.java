@@ -45,15 +45,12 @@ public final class PartyManager {
             var gameSpaceManager = GameSpaceManager.get();
 
             var members = partyManager.getPartyMembers(player, true);
-            boolean isPrivate = false;
-            if (party != null) {
-                isPrivate = party.isPrivate();
+            if (party != null && party.isPrivate()) {
+                gameSpace.addPlayerFilter(party::contains);
             }
+
             for (var member : members) {
                 if (!gameSpaceManager.inGame(member)) {
-                    if (isPrivate) {
-                        gameSpace.addPlayerToWhitelist(PlayerRef.of(member));
-                    }
                     additional.add(member);
                 }
             }
