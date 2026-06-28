@@ -21,8 +21,8 @@ dependencies {
 
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	implementation "xyz.nucleoid:plasmid:${project.plasmid_version}"
-	implementation include("xyz.nucleoid:more-codecs:${project.more_codecs_version}")
+  implementation("xyz.nucleoid:plasmid:${project.plasmid_version}")
+  implementation include("xyz.nucleoid:more-codecs:${project.more_codecs_version}")
 }
 
 processResources {
