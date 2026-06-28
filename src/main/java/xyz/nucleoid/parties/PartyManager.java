@@ -41,9 +41,13 @@ public final class PartyManager {
 
         GameEvents.COLLECT_PLAYERS_FOR_JOIN.register((gameSpace, player, additional) -> {
             var partyManager = PartyManager.get(gameSpace.getServer());
+            Party party = partyManager.getOwnParty(PlayerRef.of(player));
             var gameSpaceManager = GameSpaceManager.get();
 
             var members = partyManager.getPartyMembers(player, true);
+            if (party != null && party.isPrivate()) {
+                gameSpace.addPlayerFilter(party::contains);
+            }
 
             for (var member : members) {
                 if (!gameSpaceManager.inGame(member)) {

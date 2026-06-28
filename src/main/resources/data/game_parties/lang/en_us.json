@@ -1,6 +1,7 @@
 {
   "text.game_parties.party.add.success": "%s has been added to the party!",
   "text.game_parties.party.disband.success": "Your party has been disbanded!",
+  "text.game_parties.party.private.success": "Private games have been turned %s",
   "text.game_parties.party.error.already_in_party": "You are already in this party!",
   "text.game_parties.party.error.already_invited": "%s is already invited to this party!",
   "text.game_parties.party.error.cannot_remove_self": "Cannot remove yourself from the party!",
